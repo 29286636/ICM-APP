@@ -884,8 +884,19 @@
         <table class="info-table" style="margin-bottom:12px;">
           <tr><th style="width:25%;">SECTOR</th><td style="font-weight:700;">${reg.sector}</td></tr>
           <tr><th>TAREA</th><td style="font-weight:700;">${reg.titulo}</td></tr>
+          <tr><th>OBJETIVO</th><td>${reg.objetivo || '-'}</td></tr>
           <tr><th>ESTADO GLOBAL</th><td><strong style="color:#16a34a; font-size:14px;">${reg.promedio} Cumplido</strong></td></tr>
         </table>
+        
+        <div style="font-size:13px; font-weight:700; color:#0f172a; margin: 14px 0 6px 0; text-transform:uppercase;">Verificación Inicial</div>
+        <table class="info-table" style="margin-bottom:14px; font-size:12px;">
+          <tr><th>Seguridad (OT / Credenciales / EPP)</th><td>OT: ${chkIn.ot ? '✅' : '❌'} | Credenciales: ${chkIn.credenciales ? '✅' : '❌'} | EPP: ${chkIn.epp ? '✅' : '❌'}</td></tr>
+          <tr><th>Seguridad General del Instructivo</th><td>${reg.seguridad_gen || '-'}</td></tr>
+          <tr><th>Herramientas requeridas</th><td>${reg.herramientas || '-'}</td></tr>
+          <tr><th>Recursos requeridos</th><td>${reg.recursos || '-'}</td></tr>
+        </table>
+
+        <div style="font-size:13px; font-weight:700; color:#0f172a; margin: 14px 0 6px 0; text-transform:uppercase;">Pasos Operativos y Evidencias</div>
         ${pasosHtml}
       </div>
       <div style="display:flex; gap:10px; margin-top:16px;">
