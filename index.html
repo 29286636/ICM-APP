@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Seguimiento de Limpieza Industrial</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Librería PDF y Supabase -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      --bg-main: #f8fafc;
+      --card-bg: #ffffff;
+      --primary: #0f172a;
+      --accent: #2563eb;
+      --border-color: #cbd5e1;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --warning-bg: #fffbeb;
+      --warning-border: #f59e0b;
+      --warning-text: #b45309;
+      --success: #16a34a;
+      --danger: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-size: 13px;
+      padding-bottom: 30px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .navbar {
+      background: var(--primary);
+      color: white;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .navbar-title { font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+    .nav-right { display: flex; align-items: center; gap: 8px; }
+    .cloud-badge { font-size: 12px; background: rgba(255,255,255,0.15); padding: 4px 8px; border-radius: 12px; color: #e2e8f0; font-weight: 600; }
+    
+    .container { max-width: 100%; margin: 12px 0; padding: 0; }
+    .view-section { display: none; }
+    .view-section.active { display: block; }
+
+    .home-grid { display: flex; flex-direction: column; gap: 14px; margin-top: 16px; padding: 0 8px; }
+    .mode-card {
+      background: var(--card-bg);
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+    }
+    .mode-icon { font-size: 36px; }
+    .mode-title { font-size: 18px; font-weight: 700; color: var(--primary); }
+    .mode-desc { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 0;
+      padding: 14px 10px;
+      border-left: none;
+      border-right: none;
+      border-top: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+      box-shadow: none;
+      margin-bottom: 16px;
+      width: 100%;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--border-color);
+    }
+    .section-title { font-size: 17px; font-weight: 700; color: var(--primary); }
+
+    .form-grid { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group label { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+    .form-control {
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 15px;
+      outline: none;
+      background: #ffffff;
+      width: 100%;
+    }
+    textarea.form-control { resize: vertical; min-height: 70px; }
+
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-bottom: 12px;
+      border: 1px solid var(--border-color);
+    }
+    .info-table td, .info-table th { padding: 8px 10px; border: 1px solid var(--border-color); text-align: left; }
+    .info-table th { background: #f1f5f9; color: var(--primary); text-transform: uppercase; font-size: 11px; }
+
+    .check-inicial-grid { display: flex; flex-direction: column; gap: 10px; }
+    .check-group { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; }
+    .check-group-title { font-size: 12px; font-weight: 700; color: var(--accent); text-transform: uppercase; margin-bottom: 6px; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; }
+    .check-item-single { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 13px; font-weight: 500; }
+    .check-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; font-size: 13px; }
+    .check-options { display: flex; gap: 10px; }
+    .check-options label { display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--text-muted); }
+
+    .step-card-checklist {
+      background: #ffffff;
+      border: 2px solid var(--border-color);
+      border-radius: 10px;
+      padding: 12px 10px;
+      margin-bottom: 16px;
+    }
+    .step-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f1f5f9;
+      padding: 8px 10px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+    }
+    .step-interviniente { font-weight: 700; font-size: 14px; color: var(--primary); }
+    .select-avance { font-weight: 700; font-size: 15px; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--accent); background: #eff6ff; color: var(--accent); }
+
+    .ref-container-highlight { background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 8px; padding: 10px; text-align: center; margin-bottom: 12px; }
+    .ref-title-badge { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; display: block; }
+    .img-ref-large { width: 100%; max-height: 280px; object-fit: contain; border-radius: 6px; background: #ffffff; border: 1px solid var(--border-color); }
+
+    .como-evidencia-box { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 12px; }
+    .como-text { font-size: 15px; line-height: 1.4; color: var(--text-main); font-weight: 500; margin-bottom: 10px; white-space: pre-line; }
+    .evidencia-upload-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: #ffffff; border: 1px solid var(--accent); color: var(--accent); padding: 10px; border-radius: 6px; width: 100%; font-weight: 600; font-size: 14px; cursor: pointer; margin-bottom: 8px; }
+
+    .warning-box { background: var(--warning-bg); border: 1px solid var(--warning-border); padding: 10px; border-radius: 6px; color: var(--warning-text); font-size: 13px; }
+
+    .btn { padding: 10px 14px; border-radius: 8px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-success { background: var(--success); color: white; width: 100%; padding: 14px; font-size: 16px; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-secondary { background: #e2e8f0; color: var(--text-main); }
+
+    .editor-step-card { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 14px; }
+    .checklist-footer { display: flex; flex-direction: column; gap: 12px; background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px solid var(--border-color); text-align: center; }
+    .promedio-badge { background: var(--accent); color: white; padding: 4px 12px; border-radius: 14px; font-size: 19px; font-weight: 700; }
+
+    .doc-step-box {
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 14px;
+      background: #ffffff;
+      page-break-inside: avoid;
+    }
+    .doc-img-grid { display: flex; gap: 10px; margin-top: 10px; }
+    .doc-img-card { flex: 1; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px; text-align: center; background: #f8fafc; }
+    .doc-img-card img { max-width: 100%; max-height: 220px; object-fit: contain; border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="navbar-title">🏭 Limpieza Industrial</div>
+    <div class="nav-right">
+      <span id="cloud-status" class="cloud-badge">☁️ Conectando...</span>
+      <button id="btn-volver-inicio" class="btn btn-secondary" style="display:none; padding:6px 10px; font-size:13px;" onclick="mostrarInicio()">🏠 Inicio</button>
+    </div>
+  </nav>
+
+  <div class="container">
+
+    <!-- 0. INICIO -->
+    <section id="pantalla-inicio" class="view-section active">
+      <div style="text-align: center; margin: 10px 0 20px 0; padding: 0 10px;">
+        <h1 style="font-size: 21px; color: var(--primary);">Sistema de Limpieza</h1>
+        <p style="color: var(--text-muted); font-size: 14px;">Seleccioná una opción para continuar</p>
+      </div>
+
+      <div class="home-grid">
+        <div class="mode-card" onclick="abrirModo('editor')">
+          <div class="mode-icon">✏️</div>
+          <div>
+            <div class="mode-title">EDITOR</div>
+            <div class="mode-desc">Crear, modificar y eliminar instructivos por sector.</div>
+          </div>
+        </div>
+
+        <div class="mode-card" onclick="abrirModo('checklist')">
+          <div class="mode-icon">📋</div>
+          <div>
+            <div class="mode-title">CHECKLIST</div>
+            <div class="mode-desc">Ejecutar chequeos y cargar evidencias.</div>
+          </div>
+        </div>
+
+        <div class="mode-card" onclick="abrirModo('bitacora')">
+          <div class="mode-icon">📖</div>
+          <div>
+            <div class="mode-title">BITÁCORA</div>
+            <div class="mode-desc">Historial completo con fotos, notas y exportación PDF.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 1. EDITOR -->
+    <section id="modo-editor" class="view-section">
+      <div class="card">
+        <div class="section-header">
+          <div class="section-title">✏️ EDITOR</div>
+          <button class="btn btn-secondary" style="padding:6px 10px; font-size:13px;" onclick="nuevoInstructivo()">➕ Crear Nuevo</button>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px; background: #f1f5f9; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+          <label style="color: var(--primary); margin-bottom: 6px; display: block;">Gestionar Checklist Creado</label>
+          <div style="display: flex; gap: 8px;">
+            <select id="ed_select_tarea" class="form-control" style="flex: 1;" onchange="cargarInstructivoParaEditar()">
+              <option value="">-- Nuevo Checklist --</option>
+            </select>
+            <button class="btn btn-danger" style="padding: 6px 12px; font-size: 13px;" onclick="eliminarInstructivo()">🗑️ Eliminar</button>
+          </div>
+        </div>
+        
+        <div class="form-grid">
+          <div class="form-group"><label>Sector</label><input type="text" id="ed_sector" class="form-control" placeholder="Ej: Sector Sierra"></div>
+          <div class="form-group"><label>Título del Instructivo</label><input type="text" id="ed_titulo" class="form-control" placeholder="Ej: Cambio de Hoja"></div>
+          <div class="form-group"><label>Compañía</label><input type="text" id="ed_compania" class="form-control" value="Tenaris"></div>
+          <div class="form-group"><label>Planta</label><input type="text" id="ed_planta" class="form-control" value="TuboCaribe"></div>
+          <div class="form-group"><label>Proceso</label><input type="text" id="ed_proceso" class="form-control" placeholder="Ej: Mantenimiento Preventivo"></div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Objetivo</label>
+          <textarea id="ed_objetivo" class="form-control" placeholder="Definir las directrices para..."></textarea>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group"><label>Disposiciones de Seguridad</label><textarea id="ed_seguridad_gen" class="form-control"></textarea></div>
+          <div class="form-group"><label>Herramientas de Trabajo</label><textarea id="ed_herramientas" class="form-control"></textarea></div>
+          <div class="form-group"><label>Recursos</label><textarea id="ed_recursos" class="form-control"></textarea></div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label>EPP Requeridos</label>
+          <input type="text" id="ed_epp" class="form-control" placeholder="Casco; Guantes; Auditivos...">
+        </div>
+
+        <div class="section-header" style="margin-top: 20px;">
+          <div class="section-title">Pasos Operativos</div>
+          <button class="btn btn-secondary" style="padding:6px 10px; font-size:13px;" onclick="agregarPasoEditor(0)">➕ Paso Inicial</button>
+        </div>
+
+        <div id="ed_pasos_container"></div>
+
+        <button class="btn btn-primary" style="width:100%; padding:12px; margin-top:15px;" onclick="guardarInstructivo()">💾 Guardar Instructivo en la Nube</button>
+      </div>
+    </section>
+
+    <!-- 2. CHECKLIST -->
+    <section id="modo-checklist" class="view-section">
+      <div class="card">
+        <div class="section-header">
+          <div class="section-title">📋 CHECKLIST</div>
+        </div>
+        <div class="form-group">
+          <label>Seleccionar Checklist</label>
+          <select id="chk_select_tarea" class="form-control" onchange="cargarChecklistSeleccionado()">
+            <option value="">-- Seleccione una tarea --</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="chk_area_trabajo" style="display: none;">
+        <div class="card">
+          <h2 id="out_chk_titulo" style="font-size: 18px; font-weight:700; color:var(--primary); margin-bottom:12px;"></h2>
+          
+          <table class="info-table">
+            <tr><th>SECTOR</th><td id="out_chk_sector" style="font-weight:700;"></td></tr>
+            <tr><th>COMPAÑÍA / PLANTA</th><td><span id="out_chk_compania"></span> / <span id="out_chk_planta"></span></td></tr>
+            <tr><th>PROCESO</th><td id="out_chk_proceso"></td></tr>
+            <tr><th>OBJETIVO</th><td id="out_chk_objetivo"></td></tr>
+          </table>
+
+          <div class="section-title" style="margin: 14px 0 8px 0; font-size: 15px;">Check Inicial</div>
+          <div class="check-inicial-grid">
+            <div class="check-group">
+              <div class="check-group-title">🛡️ Seguridad</div>
+              <label class="check-item-single"><input type="checkbox" id="chk_in_ot"> OT OK (vigencia, cuadro de firmas, cortes)</label>
+              <label class="check-item-single"><input type="checkbox" id="chk_in_credenciales"> Credenciales de los operadores</label>
+              <label class="check-item-single"><input type="checkbox" id="chk_in_epp"> EPP adecuados</label>
+            </div>
+
+            <div class="check-group">
+              <div class="check-group-title">⚙️ Recursos</div>
+              <div class="check-item"><span>Atmosférico</span><div class="check-options"><label><input type="radio" name="chk_r_atmosferico" value="OK"> OK</label><label><input type="radio" name="chk_r_atmosferico" value="N/A" checked> N.A.</label></div></div>
+              <div class="check-item"><span>Megaspirador</span><div class="check-options"><label><input type="radio" name="chk_r_megaspirador" value="OK"> OK</label><label><input type="radio" name="chk_r_megaspirador" value="N/A" checked> N.A.</label></div></div>
+              <div class="check-item"><span>Hidrolavadora</span><div class="check-options"><label><input type="radio" name="chk_r_hidrolavadora" value="OK"> OK</label><label><input type="radio" name="chk_r_hidrolavadora" value="N/A" checked> N.A.</label></div></div>
+              <div class="check-item"><span>Hidrojet</span><div class="check-options"><label><input type="radio" name="chk_r_hidrojet" value="OK"> OK</label><label><input type="radio" name="chk_r_hidrojet" value="N/A" checked> N.A.</label></div></div>
+              <div class="check-item"><span>Barrero</span><div class="check-options"><label><input type="radio" name="chk_r_barrero" value="OK"> OK</label><label><input type="radio" name="chk_r_barrero" value="N/A" checked> N.A.</label></div></div>
+              <div class="check-item"><span>Criogenica</span><div class="check-options"><label><input type="radio" name="chk_r_criogenica" value="OK"> OK</label><label><input type="radio" name="chk_r_criogenica" value="N/A" checked> N.A.</label></div></div>
+            </div>
+
+            <div class="check-group">
+              <div class="check-group-title">🔧 Herramientas</div>
+              <div class="check-item"><span>Martillo percutor</span><div class="check-options"><label><input type="radio" name="chk_h_percutor" value="OK"> OK</label><label><input type="radio" name="chk_h_percutor" value="N/A" checked> N.A.</label></div></div>
+              <div class="check-item"><span>Pala</span><div class="check-options"><label><input type="radio" name="chk_h_pala" value="OK"> OK</label><label><input type="radio" name="chk_h_pala" value="N/A" checked> N.A.</label></div></div>
+              <div class="check-item"><span>Cuchara</span><div class="check-options"><label><input type="radio" name="chk_h_cuchara" value="OK"> OK</label><label><input type="radio" name="chk_h_cuchara" value="N/A" checked> N.A.</label></div></div>
+              <div class="check-item"><span>Tacho</span><div class="check-options"><label><input type="radio" name="chk_h_tacho" value="OK"> OK</label><label><input type="radio" name="chk_h_tacho" value="N/A" checked> N.A.</label></div></div>
+              <div class="check-item"><span>Escoba</span><div class="check-options"><label><input type="radio" name="chk_h_escoba" value="OK"> OK</label><label><input type="radio" name="chk_h_escoba" value="N/A" checked> N.A.</label></div></div>
+              <div class="check-item"><span>Cepillo</span><div class="check-options"><label><input type="radio" name="chk_h_cepillo" value="OK"> OK</label><label><input type="radio" name="chk_h_cepillo" value="N/A" checked> N.A.</label></div></div>
+              <div class="check-item"><span>Espátula</span><div class="check-options"><label><input type="radio" name="chk_h_espatula" value="OK"> OK</label><label><input type="radio" name="chk_h_espatula" value="N/A" checked> N.A.</label></div></div>
+              <div class="check-item"><span>Gancho</span><div class="check-options"><label><input type="radio" name="chk_h_gancho" value="OK"> OK</label><label><input type="radio" name="chk_h_gancho" value="N/A" checked> N.A.</label></div></div>
+              <div class="check-item"><span>Rastrillo</span><div class="check-options"><label><input type="radio" name="chk_h_rastrillo" value="OK"> OK</label><label><input type="radio" name="chk_h_rastrillo" value="N/A" checked> N.A.</label></div></div>
+              <div class="check-item"><span>Trapo</span><div class="check-options"><label><input type="radio" name="chk_h_trapo" value="OK"> OK</label><label><input type="radio" name="chk_h_trapo" value="N/A" checked> N.A.</label></div></div>
+              <div class="check-item"><span>Desengrasante</span><div class="check-options"><label><input type="radio" name="chk_h_desengrasante" value="OK"> OK</label><label><input type="radio" name="chk_h_desengrasante" value="N/A" checked> N.A.</label></div></div>
+              <div class="check-item"><span>Solvente</span><div class="check-options"><label><input type="radio" name="chk_h_solvente" value="OK"> OK</label><label><input type="radio" name="chk_h_solvente" value="N/A" checked> N.A.</label></div></div>
+              <div class="check-item"><span>Iluminación</span><div class="check-options"><label><input type="radio" name="chk_h_iluminacion" value="OK"> OK</label><label><input type="radio" name="chk_h_iluminacion" value="N/A" checked> N.A.</label></div></div>
+            </div>
+          </div>
+
+          <table class="info-table" style="margin-top: 14px;">
+            <tr><th>SEGURIDAD GENERAL</th><td id="out_chk_seguridad_gen"></td></tr>
+            <tr><th>HERRAMIENTAS</th><td id="out_chk_herramientas"></td></tr>
+            <tr><th>RECURSOS</th><td id="out_chk_recursos"></td></tr>
+            <tr><th>EPP</th><td id="out_chk_epp" style="font-weight:600;"></td></tr>
+          </table>
+
+          <div class="section-title" style="margin: 18px 0 10px 0; font-size: 16px;">Pasos Operativos</div>
+          <div id="out_chk_lista_pasos"></div>
+
+          <div class="checklist-footer">
+            <div>
+              <div style="font-weight:700; font-size:13px; text-transform:uppercase; margin-bottom:4px;">Avance Promedio Total</div>
+              <span id="out_chk_promedio" class="promedio-badge">0%</span>
+            </div>
+            <button class="btn btn-success" onclick="enviarChecklistABitacora()">📤 Enviar a Bitácora</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. BITÁCORA -->
+    <section id="modo-bitacora" class="view-section">
+      <div class="card">
+        <div class="section-header">
+          <div class="section-title">📖 BITÁCORA</div>
+        </div>
+
+        <div id="out_bitacora_lista"></div>
+      </div>
+
+      <div id="bitacora_detalle_card" class="card" style="display:none;">
+        <div class="section-header">
+          <div class="section-title">📄 Documento Completo de Inspección</div>
+          <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="cerrarDetalleBitacora()">✖ Cerrar</button>
+        </div>
+        <div id="bit_det_contenido"></div>
+      </div>
+    </section>
+
+  </div>
+
+<script>
+  // CONFIGURACIÓN DE SUPABASE (Ya conectada)
+  const SUPABASE_URL = 'https://grxtyeaoakxijprsdzhy.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_9shh1KYRi7cJgYRBl0t99Q_0RVR7c9_L28_b1oR4';
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let libreria = {};
+  let bitacora = [];
+  let editorPasos = [];
+  let currentEditingId = null;
+  let currentFotosEvidencia = {};
+  let activeChecklist = null;
+
+  async function sincronizarDesdeNube() {
+    const statusEl = document.getElementById('cloud-status');
+    try {
+      statusEl.innerText = '☁️ Sincronizando...';
+
+      // Cargar Instructivos
+      const { data: resLib, error: errLib } = await supabaseClient.from('instructivos').select('*');
+      if (!errLib && resLib) {
+        libreria = {};
+        resLib.forEach(row => { libreria[row.id] = row.data; });
+      }
+
+      // Cargar Bitácora
+      const { data: resBit, error: errBit } = await supabaseClient.from('bitacora').select('*').order('id', { ascending: false });
+      if (!errBit && resBit) {
+        bitacora = resBit.map(row => row.data);
+      }
+
+      statusEl.innerText = '☁️ En la Nube';
+    } catch (e) {
+      statusEl.innerText = '⚠️ Error de Red';
+    }
+  }
+
+  sincronizarDesdeNube();
+
+  function mostrarInicio() {
+    document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+    document.getElementById('pantalla-inicio').classList.add('active');
+    document.getElementById('btn-volver-inicio').style.display = 'none';
+  }
+
+  function abrirModo(modo) {
+    document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+    document.getElementById(`modo-${modo}`).classList.add('active');
+    document.getElementById('btn-volver-inicio').style.display = 'inline-flex';
+
+    if (modo === 'editor') {
+      cargarSelectEditor();
+      if (!currentEditingId && editorPasos.length === 0) nuevoInstructivo();
+      else renderEditorPasos();
+    }
+    if (modo === 'checklist') cargarSelectChecklist();
+    if (modo === 'bitacora') {
+      cerrarDetalleBitacora();
+      renderBitacora();
+    }
+  }
+
+  function comprimirImagen(file, callback) {
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        const maxAncho = 800;
+        let ancho = img.width;
+        let alto = img.height;
+        if (ancho > maxAncho) {
+          alto = Math.round((alto * maxAncho) / ancho);
+          ancho = maxAncho;
+        }
+        canvas.width = ancho;
+        canvas.height = alto;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, ancho, alto);
+        callback(canvas.toDataURL('image/jpeg', 0.6));
+      };
+      img.src = evt.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  /* EDITOR */
+  function cargarSelectEditor() {
+    const select = document.getElementById('ed_select_tarea');
+    select.innerHTML = '<option value="">-- Nuevo Checklist --</option>';
+    Object.keys(libreria).forEach(key => {
+      const item = libreria[key];
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = `[${item.sector || 'S/S'}] ${item.titulo}`;
+      if (key === currentEditingId) opt.selected = true;
+      select.appendChild(opt);
+    });
+  }
+
+  function nuevoInstructivo() {
+    currentEditingId = null;
+    document.getElementById('ed_select_tarea').value = "";
+    document.getElementById('ed_sector').value = "";
+    document.getElementById('ed_titulo').value = "";
+    document.getElementById('ed_compania').value = "Tenaris";
+    document.getElementById('ed_planta').value = "TuboCaribe";
+    document.getElementById('ed_proceso').value = "";
+    document.getElementById('ed_objetivo').value = "";
+    document.getElementById('ed_seguridad_gen').value = "";
+    document.getElementById('ed_herramientas').value = "";
+    document.getElementById('ed_recursos').value = "";
+    document.getElementById('ed_epp').value = "";
+    editorPasos = [];
+    renderEditorPasos();
+  }
+
+  function cargarInstructivoParaEditar() {
+    const key = document.getElementById('ed_select_tarea').value;
+    if (!key || !libreria[key]) {
+      nuevoInstructivo();
+      return;
+    }
+    currentEditingId = key;
+    const item = libreria[key];
+    document.getElementById('ed_sector').value = item.sector || "";
+    document.getElementById('ed_titulo').value = item.titulo || "";
+    document.getElementById('ed_compania').value = item.compania || "Tenaris";
+    document.getElementById('ed_planta').value = item.planta || "TuboCaribe";
+    document.getElementById('ed_proceso').value = item.proceso || "";
+    document.getElementById('ed_objetivo').value = item.objetivo || "";
+    document.getElementById('ed_seguridad_gen').value = item.seguridad_gen || "";
+    document.getElementById('ed_herramientas').value = item.herramientas || "";
+    document.getElementById('ed_recursos').value = item.recursos || "";
+    document.getElementById('ed_epp').value = item.epp || "";
+    editorPasos = JSON.parse(JSON.stringify(item.pasos || []));
+    renderEditorPasos();
+  }
+
+  async function eliminarInstructivo() {
+    const key = document.getElementById('ed_select_tarea').value;
+    if (!key) return alert("Seleccioná un checklist.");
+    if (confirm(`¿Eliminar "${libreria[key].titulo}" de la nube?`)) {
+      await supabaseClient.from('instructivos').delete().eq('id', key);
+      delete libreria[key];
+      cargarSelectEditor();
+      nuevoInstructivo();
+    }
+  }
+
+  function agregarPasoEditor(indexInsercion) {
+    const nuevoPaso = { interviniente: "", titulo: "", como: "", seguridad: "", imagen: "" };
+    if (editorPasos.length === 0) editorPasos.push(nuevoPaso);
+    else editorPasos.splice(indexInsercion + 1, 0, nuevoPaso);
+    renderEditorPasos();
+  }
+
+  function eliminarPasoEditor(index) {
+    editorPasos.splice(index, 1);
+    renderEditorPasos();
+  }
+
+  function moverPasoEditor(idx, direccion) {
+    const nuevoIdx = idx + direccion;
+    if (nuevoIdx < 0 || nuevoIdx >= editorPasos.length) return;
+    const paso = editorPasos.splice(idx, 1)[0];
+    editorPasos.splice(nuevoIdx, 0, paso);
+    renderEditorPasos();
+  }
+
+  function cargarImagenPasoEditor(e, idx) {
+    const file = e.target.files[0];
+    if (file) {
+      comprimirImagen(file, function(base64) {
+        editorPasos[idx].imagen = base64;
+        renderEditorPasos();
+      });
+    }
+  }
+
+  function renderEditorPasos() {
+    const container = document.getElementById('ed_pasos_container');
+    container.innerHTML = '';
+    if (editorPasos.length === 0) {
+      container.innerHTML = '<p style="color:var(--text-muted); font-size:14px; text-align:center; padding:12px;">Sin pasos. Presioná "Paso Inicial".</p>';
+      return;
+    }
+    editorPasos.forEach((p, idx) => {
+      const card = document.createElement('div');
+      card.className = 'editor-step-card';
+      card.innerHTML = `
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px; align-items:center;">
+          <strong>Paso #${idx + 1}</strong>
+          <div style="display:flex; gap:4px;">
+            <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="moverPasoEditor(${idx}, -1)" ${idx === 0 ? 'disabled' : ''}>⬆️</button>
+            <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="moverPasoEditor(${idx}, 1)" ${idx === editorPasos.length - 1 ? 'disabled' : ''}>⬇️</button>
+            <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="agregarPasoEditor(${idx})">➕ Insertar</button>
+            <button class="btn btn-danger" style="padding:4px 8px; font-size:12px;" onclick="eliminarPasoEditor(${idx})">🗑️</button>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group"><label>Interviniente</label><input type="text" class="form-control" value="${p.interviniente || ''}" onchange="editorPasos[${idx}].interviniente=this.value"></div>
+          <div class="form-group"><label>Título Operación</label><input type="text" class="form-control" value="${p.titulo || ''}" onchange="editorPasos[${idx}].titulo=this.value"></div>
+          <div class="form-group"><label>Cómo y Cuándo</label><textarea class="form-control" onchange="editorPasos[${idx}].como=this.value">${p.como || ''}</textarea></div>
+          <div class="form-group"><label>Atención / Seguridad</label><textarea class="form-control" onchange="editorPasos[${idx}].seguridad=this.value">${p.seguridad || ''}</textarea></div>
+          <div class="form-group">
+            <label>Imagen de Referencia</label>
+            <input type="file" accept="image/*" class="form-control" onchange="cargarImagenPasoEditor(event, ${idx})">
+            ${p.imagen ? `<img src="${p.imagen}" style="width:100%; max-height:160px; object-fit:contain; margin-top:6px; border-radius:6px;">` : ''}
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  async function guardarInstructivo() {
+    const sector = document.getElementById('ed_sector').value.trim();
+    const titulo = document.getElementById('ed_titulo').value.trim();
+    if (!sector || !titulo) return alert("Completá el Sector y el Título.");
+
+    const id = currentEditingId || ('inst_' + Date.now());
+    const objData = {
+      id: id,
+      sector: sector,
+      titulo: titulo,
+      compania: document.getElementById('ed_compania').value,
+      planta: document.getElementById('ed_planta').value,
+      proceso: document.getElementById('ed_proceso').value,
+      objetivo: document.getElementById('ed_objetivo').value,
+      seguridad_gen: document.getElementById('ed_seguridad_gen').value,
+      herramientas: document.getElementById('ed_herramientas').value,
+      recursos: document.getElementById('ed_recursos').value,
+      epp: document.getElementById('ed_epp').value,
+      pasos: editorPasos
+    };
+
+    const { error } = await supabaseClient.from('instructivos').upsert({ id: id, data: objData });
+    if (error) {
+      alert("Error al guardar en la nube: " + error.message);
+      return;
+    }
+
+    libreria[id] = objData;
+    currentEditingId = id;
+    cargarSelectEditor();
+    alert("Instructivo guardado en la nube con éxito.");
+  }
+
+  /* CHECKLIST */
+  function cargarSelectChecklist() {
+    const select = document.getElementById('chk_select_tarea');
+    select.innerHTML = '<option value="">-- Seleccione una tarea --</option>';
+    Object.keys(libreria).forEach(key => {
+      const item = libreria[key];
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = `[${item.sector || 'S/S'}] ${item.titulo}`;
+      select.appendChild(opt);
+    });
+  }
+
+  function cargarChecklistSeleccionado() {
+    const key = document.getElementById('chk_select_tarea').value;
+    const area = document.getElementById('chk_area_trabajo');
+    if (!key || !libreria[key]) {
+      area.style.display = 'none';
+      return;
+    }
+    activeChecklist = libreria[key];
+    currentFotosEvidencia = {};
+    area.style.display = 'block';
+
+    document.getElementById('out_chk_titulo').innerText = '📋 ' + activeChecklist.titulo;
+    document.getElementById('out_chk_sector').innerText = activeChecklist.sector || '-';
+    document.getElementById('out_chk_compania').innerText = activeChecklist.compania;
+    document.getElementById('out_chk_planta').innerText = activeChecklist.planta;
+    document.getElementById('out_chk_proceso').innerText = activeChecklist.proceso;
+    document.getElementById('out_chk_objetivo').innerText = activeChecklist.objetivo;
+    document.getElementById('out_chk_seguridad_gen').innerText = activeChecklist.seguridad_gen;
+    document.getElementById('out_chk_herramientas').innerText = activeChecklist.herramientas;
+    document.getElementById('out_chk_recursos').innerText = activeChecklist.recursos;
+    document.getElementById('out_chk_epp').innerText = activeChecklist.epp;
+
+    renderPasosChecklistVerticales();
+  }
+
+  function renderPasosChecklistVerticales() {
+    const container = document.getElementById('out_chk_lista_pasos');
+    container.innerHTML = '';
+    activeChecklist.pasos.forEach((p, idx) => {
+      const fotoActual = currentFotosEvidencia[idx] || "";
+      const card = document.createElement('div');
+      card.className = 'step-card-checklist';
+      card.innerHTML = `
+        <div class="step-card-header">
+          <div>
+            <span style="font-size:12px; color:var(--text-muted); text-transform:uppercase; font-weight:700;">PASO #${idx+1}</span><br>
+            <span class="step-interviniente">${p.interviniente ? p.interviniente + ': ' : ''}${p.titulo}</span>
+          </div>
+          <div>
+            <select id="chk_step_avance_${idx}" class="select-avance" onchange="calcularPromedioChecklist()">
+              <option value="0">0%</option><option value="10">10%</option><option value="20">20%</option><option value="30">30%</option><option value="40">40%</option><option value="50">50%</option><option value="60">60%</option><option value="70">70%</option><option value="80">80%</option><option value="90">90%</option><option value="100">100%</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="ref-container-highlight">
+          <span class="ref-title-badge">🖼️ Imagen de Referencia / Guía</span>
+          ${p.imagen ? `<img src="${p.imagen}" class="img-ref-large">` : '<span style="color:#94a3b8; font-size:13px;">Sin imagen de referencia</span>'}
+        </div>
+
+        <div class="como-evidencia-box">
+          <span class="ref-title-badge" style="color:var(--accent);">📌 Cómo y Cuándo</span>
+          <div class="como-text">${p.como}</div>
+
+          <span class="ref-title-badge" style="color:var(--accent); margin-top:8px;">📷 Evidencia de Ejecución</span>
+          <label class="evidencia-upload-btn">
+            <span>📷 Capturar / Cargar Evidencia</span>
+            <input type="file" accept="image/*" style="display:none;" onchange="cargarFotoPaso(event, ${idx})">
+          </label>
+          ${fotoActual ? `<img src="${fotoActual}" class="img-ref-large" style="max-height:220px; border-color:var(--accent);">` : ''}
+
+          <textarea id="chk_step_obs_${idx}" class="form-control" style="margin-top:8px;" placeholder="Observaciones / Novedades de este paso..."></textarea>
+        </div>
+
+        <div class="warning-box">
+          <strong>⚠️ Atención / Seguridad:</strong> ${p.seguridad || 'Sin precauciones adicionales.'}
+        </div>
+      `;
+      container.appendChild(card);
+    });
+    calcularPromedioChecklist();
+  }
+
+  function cargarFotoPaso(e, idx) {
+    const file = e.target.files[0];
+    if (file) {
+      comprimirImagen(file, function(base64) {
+        currentFotosEvidencia[idx] = base64;
+        renderPasosChecklistVerticales();
+      });
+    }
+  }
+
+  function calcularPromedioChecklist() {
+    if (!activeChecklist || !activeChecklist.pasos.length) return 0;
+    let suma = 0;
+    activeChecklist.pasos.forEach((_, idx) => {
+      const sel = document.getElementById(`chk_step_avance_${idx}`);
+      suma += parseInt(sel ? sel.value : "0", 10);
+    });
+    const prom = Math.round(suma / activeChecklist.pasos.length);
+    document.getElementById('out_chk_promedio').innerText = `${prom}%`;
+    return prom;
+  }
+
+  function capturarEstadoCheckInicial() {
+    return {
+      ot: document.getElementById('chk_in_ot').checked,
+      credenciales: document.getElementById('chk_in_credenciales').checked,
+      epp: document.getElementById('chk_in_epp').checked,
+      r_atmosferico: document.querySelector('input[name="chk_r_atmosferico"]:checked')?.value || 'N/A',
+      r_megaspirador: document.querySelector('input[name="chk_r_megaspirador"]:checked')?.value || 'N/A',
+      r_hidrolavadora: document.querySelector('input[name="chk_r_hidrolavadora"]:checked')?.value || 'N/A',
+      r_hidrojet: document.querySelector('input[name="chk_r_hidrojet"]:checked')?.value || 'N/A',
+      r_barrero: document.querySelector('input[name="chk_r_barrero"]:checked')?.value || 'N/A',
+      r_criogenica: document.querySelector('input[name="chk_r_criogenica"]:checked')?.value || 'N/A',
+      h_percutor: document.querySelector('input[name="chk_h_percutor"]:checked')?.value || 'N/A',
+      h_pala: document.querySelector('input[name="chk_h_pala"]:checked')?.value || 'N/A',
+      h_cuchara: document.querySelector('input[name="chk_h_cuchara"]:checked')?.value || 'N/A',
+      h_tacho: document.querySelector('input[name="chk_h_tacho"]:checked')?.value || 'N/A',
+      h_escoba: document.querySelector('input[name="chk_h_escoba"]:checked')?.value || 'N/A',
+      h_cepillo: document.querySelector('input[name="chk_h_cepillo"]:checked')?.value || 'N/A',
+      h_espatula: document.querySelector('input[name="chk_h_espatula"]:checked')?.value || 'N/A',
+      h_gancho: document.querySelector('input[name="chk_h_gancho"]:checked')?.value || 'N/A',
+      h_rastrillo: document.querySelector('input[name="chk_h_rastrillo"]:checked')?.value || 'N/A',
+      h_trapo: document.querySelector('input[name="chk_h_trapo"]:checked')?.value || 'N/A',
+      h_desengrasante: document.querySelector('input[name="chk_h_desengrasante"]:checked')?.value || 'N/A',
+      h_solvente: document.querySelector('input[name="chk_h_solvente"]:checked')?.value || 'N/A',
+      h_iluminacion: document.querySelector('input[name="chk_h_iluminacion"]:checked')?.value || 'N/A'
+    };
+  }
+
+  async function enviarChecklistABitacora() {
+    if (!activeChecklist) return;
+    const avances = {}, observaciones = {};
+    activeChecklist.pasos.forEach((_, idx) => {
+      const sel = document.getElementById(`chk_step_avance_${idx}`);
+      const txt = document.getElementById(`chk_step_obs_${idx}`);
+      avances[idx] = sel ? sel.value : "0";
+      observaciones[idx] = txt ? txt.value.trim() : "";
+    });
+
+    const regId = 'reg_' + Date.now();
+    const registro = {
+      id: regId,
+      fecha: new Date().toLocaleString(),
+      sector: activeChecklist.sector || '-',
+      titulo: activeChecklist.titulo,
+      compania: activeChecklist.compania || 'Tenaris',
+      planta: activeChecklist.planta || 'TuboCaribe',
+      proceso: activeChecklist.proceso || '-',
+      objetivo: activeChecklist.objetivo || '-',
+      seguridad_gen: activeChecklist.seguridad_gen || '-',
+      herramientas: activeChecklist.herramientas || '-',
+      recursos: activeChecklist.recursos || '-',
+      epp: activeChecklist.epp || '-',
+      promedio: calcularPromedioChecklist() + '%',
+      checkInicial: capturarEstadoCheckInicial(),
+      pasos: JSON.parse(JSON.stringify(activeChecklist.pasos)),
+      detalleState: { avances, observaciones, fotos: currentFotosEvidencia }
+    };
+
+    const { error } = await supabaseClient.from('bitacora').upsert({ id: regId, data: registro });
+    if (error) {
+      alert("Error al guardar bitácora en la nube: " + error.message);
+      return;
+    }
+
+    bitacora.unshift(registro);
+    alert("Registro guardado con éxito en la Bitácora de la Nube.");
+    abrirModo('bitacora');
+  }
+
+  /* BITÁCORA */
+  function renderBitacora() {
+    const container = document.getElementById('out_bitacora_lista');
+    container.innerHTML = '';
+    if (bitacora.length === 0) {
+      container.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:14px; padding:20px;">No hay registros en la nube.</p>';
+      return;
+    }
+    bitacora.forEach((reg, idx) => {
+      const item = document.createElement('div');
+      item.style.cssText = "background:#ffffff; border:1px solid var(--border-color); border-radius:8px; padding:10px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;";
+      item.innerHTML = `
+        <div>
+          <div style="font-size:12px; color:var(--text-muted);">${reg.fecha}</div>
+          <div style="font-weight:700; font-size:15px; color:var(--primary);">${reg.titulo}</div>
+          <div style="font-size:13px; color:var(--text-muted);">${reg.sector} | ${reg.planta}</div>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+          <span class="promedio-badge" style="font-size:13px; padding:2px 8px;">${reg.promedio}</span>
+          <div>
+            <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="verDetalleBitacora(${idx})">👁️ Ver Doc Completo</button>
+            <button class="btn btn-danger" style="padding:4px 8px; font-size:12px;" onclick="eliminarBitacora('${reg.id}', ${idx})">🗑️</button>
+          </div>
+        </div>
+      `;
+      container.appendChild(item);
+    });
+  }
+
+  function verDetalleBitacora(idx) {
+    const reg = bitacora[idx];
+    const card = document.getElementById('bitacora_detalle_card');
+    const cont = document.getElementById('bit_det_contenido');
+    const chkIn = reg.checkInicial || {};
+
+    let pasosHtml = '';
+    if (reg.pasos && Array.isArray(reg.pasos)) {
+      reg.pasos.forEach((p, i) => {
+        const avance = reg.detalleState?.avances?.[i] || '0';
+        const obs = reg.detalleState?.observaciones?.[i] || 'Sin observaciones registradas.';
+        const fotoEvidencia = reg.detalleState?.fotos?.[i];
+
+        pasosHtml += `
+          <div class="doc-step-box">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #cbd5e1; padding-bottom: 6px; margin-bottom: 8px;">
+              <strong style="color:#0f172a; font-size:14px;">PASO #${i+1}: ${p.interviniente ? p.interviniente + ' - ' : ''}${p.titulo}</strong>
+              <span style="background:#2563eb; color:#ffffff; padding:3px 10px; border-radius:12px; font-weight:700; font-size:12px;">AVANCE: ${avance}%</span>
+            </div>
+            <p style="font-size:13px; margin-bottom:6px; line-height:1.4;"><strong>📌 Procedimiento:</strong> ${p.como}</p>
+            ${p.seguridad ? `<p style="font-size:13px; margin-bottom:6px; color:#b45309; line-height:1.4;"><strong>⚠️ Seguridad / Precaución:</strong> ${p.seguridad}</p>` : ''}
+            <p style="font-size:13px; margin-bottom:8px; color:#334155; background:#f8fafc; padding:6px; border-radius:4px; border:1px solid #e2e8f0;"><strong>💬 Observación / Novedad:</strong> ${obs}</p>
+
+            <div class="doc-img-grid">
+              ${p.imagen ? `<div class="doc-img-card"><span style="font-size:11px; font-weight:700; color:#64748b; display:block; margin-bottom:4px;">🖼️ GUÍA</span><img src="${p.imagen}"></div>` : ''}
+              ${fotoEvidencia ? `<div class="doc-img-card" style="border-color:#2563eb; background:#eff6ff;"><span style="font-size:11px; font-weight:700; color:#2563eb; display:block; margin-bottom:4px;">📷 EVIDENCIA</span><img src="${fotoEvidencia}"></div>` : ''}
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    cont.innerHTML = `
+      <div id="documento_imprimible" style="padding: 12px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; color: #1e293b;">
+        <div style="text-align:center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 14px;">
+          <h2 style="font-size: 17px; color: #0f172a; margin-bottom: 4px; font-weight:700;">INFORME TÉCNICO Y BITÁCORA DE EJECUCIÓN</h2>
+          <div style="font-size: 12px; color: #64748b; display:flex; justify-content:space-between; margin-top:6px;">
+            <span><strong>Compañía/Planta:</strong> ${reg.compania} / ${reg.planta}</span>
+            <span><strong>Fecha:</strong> ${reg.fecha}</span>
+          </div>
+        </div>
+        <table class="info-table" style="margin-bottom:12px;">
+          <tr><th style="width:25%;">SECTOR</th><td style="font-weight:700;">${reg.sector}</td></tr>
+          <tr><th>TAREA</th><td style="font-weight:700;">${reg.titulo}</td></tr>
+          <tr><th>ESTADO GLOBAL</th><td><strong style="color:#16a34a; font-size:14px;">${reg.promedio} Cumplido</strong></td></tr>
+        </table>
+        ${pasosHtml}
+      </div>
+      <div style="display:flex; gap:10px; margin-top:16px;">
+        <button class="btn btn-primary" style="flex:1;" onclick="descargarPDF('${reg.titulo.replace(/[^a-zA-Z0-9]/g, '_')}')">📄 Descargar PDF</button>
+        <button class="btn btn-secondary" style="flex:1;" onclick="cerrarDetalleBitacora()">Cerrar</button>
+      </div>
+    `;
+    card.style.display = 'block';
+    card.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function descargarPDF(nombre) {
+    const elemento = document.getElementById('documento_imprimible');
+    const opt = {
+      margin: [8, 8, 8, 8],
+      filename: `${nombre}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(elemento).save();
+  }
+
+  function cerrarDetalleBitacora() {
+    document.getElementById('bitacora_detalle_card').style.display = 'none';
+  }
+
+  async function eliminarBitacora(idReg, idx) {
+    if (confirm("¿Eliminar este registro de la nube?")) {
+      await supabaseClient.from('bitacora').delete().eq('id', idReg);
+      bitacora.splice(idx, 1);
+      renderBitacora();
+      cerrarDetalleBitacora();
+    }
+  }
+</script>
+</body>
+</html>
