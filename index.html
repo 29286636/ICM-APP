@@ -7,8 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Librería PDF y Supabase -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -386,7 +385,7 @@
   </div>
 
 <script>
-  // CONFIGURACIÓN DE SUPABASE (Ya conectada)
+  // CONFIGURACIÓN DE SUPABASE
   const SUPABASE_URL = 'https://grxtyeaoakxijprsdzhy.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_9shh1KYRi7cJgYRBl0t99Q_0RVR7NO7';
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -403,14 +402,12 @@
     try {
       statusEl.innerText = '☁️ Sincronizando...';
 
-      // Cargar Instructivos
       const { data: resLib, error: errLib } = await supabaseClient.from('instructivos').select('*');
       if (!errLib && resLib) {
         libreria = {};
         resLib.forEach(row => { libreria[row.id] = row.data; });
       }
 
-      // Cargar Bitácora
       const { data: resBit, error: errBit } = await supabaseClient.from('bitacora').select('*').order('id', { ascending: false });
       if (!errBit && resBit) {
         bitacora = resBit.map(row => row.data);
@@ -900,7 +897,7 @@
         ${pasosHtml}
       </div>
       <div style="display:flex; gap:10px; margin-top:16px;">
-        <button class="btn btn-primary" style="flex:1;" onclick="descargarPDF('${reg.titulo.replace(/[^a-zA-Z0-9]/g, '_')}')">📄 Descargar PDF</button>
+        <button class="btn btn-primary" style="flex:1;" onclick="descargarPDF('${reg.titulo.replace(/[^a-zA-Z0-9]/g, '_')}')">📄 Descargar PDF / Imprimir</button>
         <button class="btn btn-secondary" style="flex:1;" onclick="cerrarDetalleBitacora()">Cerrar</button>
       </div>
     `;
@@ -909,43 +906,39 @@
   }
 
   function descargarPDF(nombre) {
-    const contenidoOriginal = document.getElementById('documento_imprimible').innerHTML;
-
-    // Creamos un contenedor temporal fuera de la pantalla con ancho fijo A4 (794px)
-    const contenedorTemp = document.createElement('div');
-    contenedorTemp.style.position = 'absolute';
-    contenedorTemp.style.left = '-9999px';
-    contenedorTemp.style.top = '0';
-    contenedorTemp.style.width = '794px';
-    contenedorTemp.style.background = '#ffffff';
-    contenedorTemp.style.padding = '20px';
-    contenedorTemp.style.color = '#1e293b';
-    contenedorTemp.innerHTML = contenidoOriginal;
+    const contenido = document.getElementById('documento_imprimible').innerHTML;
     
-    document.body.appendChild(contenedorTemp);
-
-    const opt = {
-      margin:       [10, 10, 10, 10],
-      filename:     `${nombre}.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { 
-        scale: 2, 
-        useCORS: true, 
-        letterRendering: true,
-        windowWidth: 794 
-      },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    // Respiro de 800ms para procesar imágenes en Base64 en cualquier dispositivo móvil o PC
-    setTimeout(() => {
-      html2pdf().set(opt).from(contenedorTemp).save().then(() => {
-        document.body.removeChild(contenedorTemp);
-      }).catch(err => {
-        console.error("Error al generar PDF:", err);
-        document.body.removeChild(contenedorTemp);
-      });
-    }, 800);
+    // Abre una ventana limpia con el contenido y dispara el motor nativo del navegador para Guardar como PDF
+    const ventanaPDF = window.open('', '_blank');
+    ventanaPDF.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${nombre}</title>
+        <style>
+          body { font-family: 'Inter', system-ui, sans-serif; color: #1e293b; padding: 20px; background: #ffffff; }
+          .info-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 12px; border: 1px solid #cbd5e1; }
+          .info-table td, .info-table th { padding: 8px 10px; border: 1px solid #cbd5e1; text-align: left; }
+          .info-table th { background: #f1f5f9; color: #0f172a; text-transform: uppercase; font-size: 11px; }
+          .doc-step-box { border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; margin-bottom: 14px; background: #ffffff; page-break-inside: avoid; }
+          .doc-img-grid { display: flex; gap: 10px; margin-top: 10px; }
+          .doc-img-card { flex: 1; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px; text-align: center; background: #f8fafc; }
+          .doc-img-card img { max-width: 100%; max-height: 220px; object-fit: contain; border-radius: 4px; }
+        </style>
+      </head>
+      <body>
+        ${contenido}
+        <script>
+          window.onload = function() {
+            setTimeout(() => {
+              window.print();
+            }, 500);
+          };
+        <\/script>
+      </body>
+      </html>
+    `);
+    ventanaPDF.document.close();
   }
 
   function cerrarDetalleBitacora() {
