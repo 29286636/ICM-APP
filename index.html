@@ -909,19 +909,43 @@
   }
 
   function descargarPDF(nombre) {
-    const elemento = document.getElementById('documento_imprimible');
-    const opt = {
-      margin: [8, 8, 8, 8],
-      filename: `${nombre}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
+    const contenidoOriginal = document.getElementById('documento_imprimible').innerHTML;
+
+    // Creamos un contenedor temporal fuera de la pantalla con ancho fijo A4 (794px)
+    const contenedorTemp = document.createElement('div');
+    contenedorTemp.style.position = 'absolute';
+    contenedorTemp.style.left = '-9999px';
+    contenedorTemp.style.top = '0';
+    contenedorTemp.style.width = '794px';
+    contenedorTemp.style.background = '#ffffff';
+    contenedorTemp.style.padding = '20px';
+    contenedorTemp.style.color = '#1e293b';
+    contenedorTemp.innerHTML = contenidoOriginal;
     
-    // Retardo para asegurar que las imágenes base64 carguen tanto en PC como en celular
+    document.body.appendChild(contenedorTemp);
+
+    const opt = {
+      margin:       [10, 10, 10, 10],
+      filename:     `${nombre}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { 
+        scale: 2, 
+        useCORS: true, 
+        letterRendering: true,
+        windowWidth: 794 
+      },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    // Respiro de 800ms para procesar imágenes en Base64 en cualquier dispositivo móvil o PC
     setTimeout(() => {
-      html2pdf().set(opt).from(elemento).save();
-    }, 500);
+      html2pdf().set(opt).from(contenedorTemp).save().then(() => {
+        document.body.removeChild(contenedorTemp);
+      }).catch(err => {
+        console.error("Error al generar PDF:", err);
+        document.body.removeChild(contenedorTemp);
+      });
+    }, 800);
   }
 
   function cerrarDetalleBitacora() {
