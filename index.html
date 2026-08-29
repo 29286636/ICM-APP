@@ -175,10 +175,11 @@
       margin-bottom: 14px;
       background: #ffffff;
       page-break-inside: avoid;
+      break-inside: avoid;
     }
     .doc-img-grid { display: flex; gap: 10px; margin-top: 10px; }
     .doc-img-card { flex: 1; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px; text-align: center; background: #f8fafc; }
-    .doc-img-card img { max-width: 100%; max-height: 220px; object-fit: contain; border-radius: 4px; }
+    .doc-img-card img { max-width: 100%; max-height: 200px; object-fit: contain; border-radius: 4px; }
   </style>
 </head>
 <body>
@@ -908,7 +909,6 @@
   function descargarPDF(nombre) {
     const contenido = document.getElementById('documento_imprimible').innerHTML;
     
-    // Abre una ventana limpia con el contenido y dispara el motor nativo del navegador para Guardar como PDF
     const ventanaPDF = window.open('', '_blank');
     ventanaPDF.document.write(`
       <!DOCTYPE html>
@@ -916,14 +916,66 @@
       <head>
         <title>${nombre}</title>
         <style>
-          body { font-family: 'Inter', system-ui, sans-serif; color: #1e293b; padding: 20px; background: #ffffff; }
-          .info-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 12px; border: 1px solid #cbd5e1; }
-          .info-table td, .info-table th { padding: 8px 10px; border: 1px solid #cbd5e1; text-align: left; }
-          .info-table th { background: #f1f5f9; color: #0f172a; text-transform: uppercase; font-size: 11px; }
-          .doc-step-box { border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; margin-bottom: 14px; background: #ffffff; page-break-inside: avoid; }
-          .doc-img-grid { display: flex; gap: 10px; margin-top: 10px; }
-          .doc-img-card { flex: 1; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px; text-align: center; background: #f8fafc; }
-          .doc-img-card img { max-width: 100%; max-height: 220px; object-fit: contain; border-radius: 4px; }
+          body { 
+            font-family: 'Inter', system-ui, sans-serif; 
+            color: #1e293b; 
+            padding: 15px; 
+            background: #ffffff; 
+            margin: 0;
+          }
+          .info-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            font-size: 13px; 
+            margin-bottom: 12px; 
+            border: 1px solid #cbd5e1; 
+          }
+          .info-table td, .info-table th { 
+            padding: 8px 10px; 
+            border: 1px solid #cbd5e1; 
+            text-align: left; 
+          }
+          .info-table th { 
+            background: #f1f5f9; 
+            color: #0f172a; 
+            text-transform: uppercase; 
+            font-size: 11px; 
+          }
+          .doc-step-box { 
+            border: 1px solid #cbd5e1; 
+            border-radius: 8px; 
+            padding: 10px; 
+            margin-bottom: 14px; 
+            background: #ffffff; 
+            page-break-inside: avoid; 
+            break-inside: avoid; 
+          }
+          .doc-img-grid { 
+            display: flex; 
+            gap: 10px; 
+            margin-top: 10px; 
+          }
+          .doc-img-card { 
+            flex: 1; 
+            border: 1px solid #cbd5e1; 
+            border-radius: 6px; 
+            padding: 6px; 
+            text-align: center; 
+            background: #f8fafc; 
+          }
+          .doc-img-card img { 
+            max-width: 100%; 
+            max-height: 200px; 
+            object-fit: contain; 
+            border-radius: 4px; 
+          }
+          
+          @media print {
+            body { padding: 0; background: transparent; }
+            .doc-step-box { break-inside: avoid; page-break-inside: avoid; }
+            table { page-break-inside: auto; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+          }
         </style>
       </head>
       <body>
@@ -931,8 +983,9 @@
         <script>
           window.onload = function() {
             setTimeout(() => {
+              window.focus();
               window.print();
-            }, 500);
+            }, 600);
           };
         <\/script>
       </body>
