@@ -221,10 +221,10 @@
   </div>
 </div>
 
-<div class="mode-card" onclick="abrirModo('registros')" style="display: flex; align-items: center; gap: 16px;">
-  <div class="mode-icon" style="flex-shrink: 0;"><img src="archico.jpg" alt="Registros" style="width: 60px; height: 60px; border-radius: 10px; object-fit: cover; display: block;"></div>
+<div class="mode-card" onclick="abrirModo('bitacora')" style="display: flex; align-items: center; gap: 16px;">
+  <div class="mode-icon" style="flex-shrink: 0;"><img src="archico.jpg" alt="Bitácora" style="width: 60px; height: 60px; border-radius: 10px; object-fit: cover; display: block;"></div>
   <div>
-    <div class="mode-title">REGISTROS</div>
+    <div class="mode-title">BITÁCORA</div>
     <div class="mode-desc">Historial completo con fotos, notas y exportación PDF.</div>
   </div>
 </div>
@@ -361,28 +361,28 @@
               <div style="font-weight:700; font-size:13px; text-transform:uppercase; margin-bottom:4px;">Avance Promedio Total</div>
               <span id="out_chk_promedio" class="promedio-badge">0%</span>
             </div>
-            <button class="btn btn-success" onclick="enviarChecklistARegistros()">📤 Enviar a Registros</button>
+            <button class="btn btn-success" onclick="enviarChecklistABitacora()">📤 Enviar a Bitácora</button>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- 3. REGISTROS -->
-    <section id="modo-registros" class="view-section">
+    <!-- 3. BITÁCORA -->
+    <section id="modo-bitacora" class="view-section">
       <div class="card">
         <div class="section-header">
-          <div class="section-title">📖 REGISTROS</div>
+          <div class="section-title">📖 BITÁCORA</div>
         </div>
 
-        <div id="out_registros_lista"></div>
+        <div id="out_bitacora_lista"></div>
       </div>
 
-      <div id="registros_detalle_card" class="card" style="display:none;">
+      <div id="bitacora_detalle_card" class="card" style="display:none;">
         <div class="section-header">
           <div class="section-title">📄 Documento Completo de Inspección</div>
-          <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="cerrarDetalleRegistros()">✖ Cerrar</button>
+          <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="cerrarDetalleBitacora()">✖ Cerrar</button>
         </div>
-        <div id="reg_det_contenido"></div>
+        <div id="bit_det_contenido"></div>
       </div>
     </section>
 
@@ -395,7 +395,7 @@
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   let libreria = {};
-  let registros = [];
+  let bitacora = [];
   let editorPasos = [];
   let currentEditingId = null;
   let currentFotosEvidencia = {};
@@ -412,9 +412,9 @@
         resLib.forEach(row => { libreria[row.id] = row.data; });
       }
 
-      const { data: resReg, error: errReg } = await supabaseClient.from('registros').select('*').order('id', { ascending: false });
-      if (!errReg && resReg) {
-        registros = resReg.map(row => row.data);
+      const { data: resBit, error: errBit } = await supabaseClient.from('bitacora').select('*').order('id', { ascending: false });
+      if (!errBit && resBit) {
+        bitacora = resBit.map(row => row.data);
       }
 
       statusEl.innerText = '☁️ En la Nube';
@@ -442,9 +442,9 @@
       else renderEditorPasos();
     }
     if (modo === 'checklist') cargarSelectChecklist();
-    if (modo === 'registros') {
-      cerrarDetalleRegistros();
-      renderRegistros();
+    if (modo === 'bitacora') {
+      cerrarDetalleBitacora();
+      renderBitacora();
     }
   }
 
@@ -771,7 +771,7 @@
     };
   }
 
-  async function enviarChecklistARegistros() {
+  async function enviarChecklistABitacora() {
     if (!activeChecklist) return;
     const avances = {}, observaciones = {};
     activeChecklist.pasos.forEach((_, idx) => {
@@ -801,26 +801,26 @@
       detalleState: { avances, observaciones, fotos: currentFotosEvidencia }
     };
 
-    const { error } = await supabaseClient.from('registros').upsert({ id: regId, data: registro });
+    const { error } = await supabaseClient.from('bitacora').upsert({ id: regId, data: registro });
     if (error) {
-      alert("Error al guardar registros en la nube: " + error.message);
+      alert("Error al guardar bitácora en la nube: " + error.message);
       return;
     }
 
-    registros.unshift(registro);
-    alert("Registro guardado con éxito en los Registros de la Nube.");
-    abrirModo('registros');
+    bitacora.unshift(registro);
+    alert("Registro guardado con éxito en la Bitácora de la Nube.");
+    abrirModo('bitacora');
   }
 
-  /* REGISTROS */
-  function renderRegistros() {
-    const container = document.getElementById('out_registros_lista');
+  /* BITÁCORA */
+  function renderBitacora() {
+    const container = document.getElementById('out_bitacora_lista');
     container.innerHTML = '';
-    if (registros.length === 0) {
+    if (bitacora.length === 0) {
       container.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:14px; padding:20px;">No hay registros en la nube.</p>';
       return;
     }
-    registros.forEach((reg, idx) => {
+    bitacora.forEach((reg, idx) => {
       const item = document.createElement('div');
       item.style.cssText = "background:#ffffff; border:1px solid var(--border-color); border-radius:8px; padding:10px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;";
       item.innerHTML = `
@@ -832,8 +832,8 @@
         <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
           <span class="promedio-badge" style="font-size:13px; padding:2px 8px;">${reg.promedio}</span>
           <div>
-            <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="verDetalleRegistros(${idx})">👁️ Ver Doc Completo</button>
-            <button class="btn btn-danger" style="padding:4px 8px; font-size:12px;" onclick="eliminarRegistros('${reg.id}', ${idx})">🗑️</button>
+            <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="verDetalleBitacora(${idx})">👁️ Ver Doc Completo</button>
+            <button class="btn btn-danger" style="padding:4px 8px; font-size:12px;" onclick="eliminarBitacora('${reg.id}', ${idx})">🗑️</button>
           </div>
         </div>
       `;
@@ -841,10 +841,10 @@
     });
   }
 
-  function verDetalleRegistros(idx) {
-    const reg = registros[idx];
-    const card = document.getElementById('registros_detalle_card');
-    const cont = document.getElementById('reg_det_contenido');
+  function verDetalleBitacora(idx) {
+    const reg = bitacora[idx];
+    const card = document.getElementById('bitacora_detalle_card');
+    const cont = document.getElementById('bit_det_contenido');
     const chkIn = reg.checkInicial || {};
 
     let pasosHtml = '';
@@ -902,7 +902,7 @@
       </div>
       <div style="display:flex; gap:10px; margin-top:16px;">
         <button class="btn btn-primary" style="flex:1;" onclick="descargarPDF('${reg.titulo.replace(/[^a-zA-Z0-9]/g, '_')}')">📄 Descargar PDF / Imprimir</button>
-        <button class="btn btn-secondary" style="flex:1;" onclick="cerrarDetalleRegistros()">Cerrar</button>
+        <button class="btn btn-secondary" style="flex:1;" onclick="cerrarDetalleBitacora()">Cerrar</button>
       </div>
     `;
     card.style.display = 'block';
@@ -997,16 +997,16 @@
     ventanaPDF.document.close();
   }
 
-  function cerrarDetalleRegistros() {
-    document.getElementById('registros_detalle_card').style.display = 'none';
+  function cerrarDetalleBitacora() {
+    document.getElementById('bitacora_detalle_card').style.display = 'none';
   }
 
-  async function eliminarRegistros(idReg, idx) {
+  async function eliminarBitacora(idReg, idx) {
     if (confirm("¿Eliminar este registro de la nube?")) {
-      await supabaseClient.from('registros').delete().eq('id', idReg);
-      registros.splice(idx, 1);
-      renderRegistros();
-      cerrarDetalleRegistros();
+      await supabaseClient.from('bitacora').delete().eq('id', idReg);
+      bitacora.splice(idx, 1);
+      renderBitacora();
+      cerrarDetalleBitacora();
     }
   }
 </script>
