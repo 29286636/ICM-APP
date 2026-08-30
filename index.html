@@ -222,17 +222,17 @@
         </div>
 
         <div class="mode-card" onclick="abrirModo('registros')" style="display: flex; align-items: center; gap: 16px;">
-          <div class="mode-icon" style="flex-shrink: 0;"><img src="archico.jpg" alt="Registros" style="width: 60px; height: 60px; border-radius: 10px; object-fit: cover; display: block;"></div>
+          <div class="mode-icon" style="flex-shrink: 0;"><img src="archico.jpg" alt="Bitácora" style="width: 60px; height: 60px; border-radius: 10px; object-fit: cover; display: block;"></div>
           <div>
-            <div class="mode-title">REGISTROS</div>
+            <div class="mode-title">BITÁCORA</div>
             <div class="mode-desc">Historial completo con fotos, notas y exportación PDF.</div>
           </div>
         </div>
       </div>
 
-      <!-- BOTÓN DE BACKUP CENTRADO AL FINAL DE LA PÁGINA DE INICIO -->
-      <div style="text-align: center; margin: 32px 0 16px 0; padding: 0 10px;">
-        <button class="btn btn-secondary" style="padding: 12px 24px; font-size: 15px; background: #1e293b; color: #fff; border: 1px solid #475569; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); width: 100%; max-width: 400px;" onclick="descargarBackupJSON()">💾 Descargar Backup General (PC)</button>
+      <!-- BOTÓN DE BACKUP DISCRETO Y PEQUEÑO AL FINAL DE TODO -->
+      <div style="text-align: center; margin: 50px 0 10px 0; padding: 0 10px;">
+        <button style="background: transparent; border: none; color: #94a3b8; font-size: 11px; cursor: pointer; text-decoration: underline; padding: 4px;" onclick="descargarBackupJSON()">Descargar Backup General (PC)</button>
       </div>
     </section>
 
@@ -366,17 +366,17 @@
               <div style="font-weight:700; font-size:13px; text-transform:uppercase; margin-bottom:4px;">Avance Promedio Total</div>
               <span id="out_chk_promedio" class="promedio-badge">0%</span>
             </div>
-            <button class="btn btn-success" onclick="enviarChecklistARegistros()">📤 Enviar a Registros</button>
+            <button class="btn btn-success" onclick="enviarChecklistABitacora()">📤 Enviar a Bitácora</button>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- 3. REGISTROS -->
+    <!-- 3. BITÁCORA -->
     <section id="modo-registros" class="view-section">
       <div class="card">
         <div class="section-header">
-          <div class="section-title">📖 REGISTROS</div>
+          <div class="section-title">📖 BITÁCORA</div>
         </div>
 
         <div id="out_registros_lista"></div>
@@ -385,7 +385,7 @@
       <div id="registros_detalle_card" class="card" style="display:none;">
         <div class="section-header">
           <div class="section-title">📄 Documento Completo de Inspección</div>
-          <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="cerrarDetalleRegistros()">✖ Cerrar</button>
+          <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="cerrarDetalleBitacora()">✖ Cerrar</button>
         </div>
         <div id="reg_det_contenido"></div>
       </div>
@@ -465,8 +465,8 @@
     }
     if (modo === 'checklist') cargarSelectChecklist();
     if (modo === 'registros') {
-      cerrarDetalleRegistros();
-      renderRegistros();
+      cerrarDetalleBitacora();
+      renderBitacora();
     }
   }
 
@@ -793,7 +793,7 @@
     };
   }
 
-  async function enviarChecklistARegistros() {
+  async function enviarChecklistABitacora() {
     if (!activeChecklist) return;
     const avances = {}, observaciones = {};
     activeChecklist.pasos.forEach((_, idx) => {
@@ -825,21 +825,21 @@
 
     const { error } = await supabaseClient.from('registros').upsert({ id: regId, data: registro });
     if (error) {
-      alert("Error al guardar registros en la nube: " + error.message);
+      alert("Error al guardar en la bitácora de la nube: " + error.message);
       return;
     }
 
     registros.unshift(registro);
-    alert("Registro guardado con éxito en los Registros de la Nube.");
+    alert("Registro guardado con éxito en la Bitácora de la Nube.");
     abrirModo('registros');
   }
 
-  /* REGISTROS */
-  function renderRegistros() {
+  /* BITÁCORA */
+  function renderBitacora() {
     const container = document.getElementById('out_registros_lista');
     container.innerHTML = '';
     if (registros.length === 0) {
-      container.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:14px; padding:20px;">No hay registros en la nube.</p>';
+      container.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:14px; padding:20px;">No hay registros en la bitácora.</p>';
       return;
     }
     registros.forEach((reg, idx) => {
@@ -854,8 +854,8 @@
         <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
           <span class="promedio-badge" style="font-size:13px; padding:2px 8px;">${reg.promedio}</span>
           <div>
-            <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="verDetalleRegistros(${idx})">👁️ Ver Doc Completo</button>
-            <button class="btn btn-danger" style="padding:4px 8px; font-size:12px;" onclick="eliminarRegistros('${reg.id}', ${idx})">🗑️</button>
+            <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="verDetalleBitacora(${idx})">👁️ Ver Doc Completo</button>
+            <button class="btn btn-danger" style="padding:4px 8px; font-size:12px;" onclick="eliminarBitacora('${reg.id}', ${idx})">🗑️</button>
           </div>
         </div>
       `;
@@ -863,7 +863,7 @@
     });
   }
 
-  function verDetalleRegistros(idx) {
+  function verDetalleBitacora(idx) {
     const reg = registros[idx];
     const card = document.getElementById('registros_detalle_card');
     const cont = document.getElementById('reg_det_contenido');
@@ -898,7 +898,7 @@
     cont.innerHTML = `
       <div id="documento_imprimible" style="padding: 12px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; color: #1e293b;">
         <div style="text-align:center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 14px;">
-          <h2 style="font-size: 17px; color: #0f172a; margin-bottom: 4px; font-weight:700;">INFORME</h2>
+          <h2 style="font-size: 17px; color: #0f172a; margin-bottom: 4px; font-weight:700;">INFORME DE BITÁCORA</h2>
           <div style="font-size: 12px; color: #64748b; display:flex; justify-content:space-between; margin-top:6px;">
             <span><strong>Compañía/Planta:</strong> ${reg.compania} / ${reg.planta}</span>
             <span><strong>Fecha:</strong> ${reg.fecha}</span>
@@ -924,7 +924,7 @@
       </div>
       <div style="display:flex; gap:10px; margin-top:16px;">
         <button class="btn btn-primary" style="flex:1;" onclick="descargarPDF('${reg.titulo.replace(/[^a-zA-Z0-9]/g, '_')}')">📄 Descargar PDF / Imprimir</button>
-        <button class="btn btn-secondary" style="flex:1;" onclick="cerrarDetalleRegistros()">Cerrar</button>
+        <button class="btn btn-secondary" style="flex:1;" onclick="cerrarDetalleBitacora()">Cerrar</button>
       </div>
     `;
     card.style.display = 'block';
@@ -1019,16 +1019,16 @@
     ventanaPDF.document.close();
   }
 
-  function cerrarDetalleRegistros() {
+  function cerrarDetalleBitacora() {
     document.getElementById('registros_detalle_card').style.display = 'none';
   }
 
-  async function eliminarRegistros(idReg, idx) {
-    if (confirm("¿Eliminar este registro de la nube?")) {
+  async function eliminarBitacora(idReg, idx) {
+    if (confirm("¿Eliminar este registro de la bitácora?")) {
       await supabaseClient.from('registros').delete().eq('id', idReg);
       registros.splice(idx, 1);
-      renderRegistros();
-      cerrarDetalleRegistros();
+      renderBitacora();
+      cerrarDetalleBitacora();
     }
   }
 </script>
