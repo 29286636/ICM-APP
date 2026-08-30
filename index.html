@@ -7,7 +7,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -186,9 +185,9 @@
 
   <nav class="navbar">
     <div class="navbar-title" style="display: flex; align-items: center; gap: 8px;">
-  <img src="logo.jpg" alt="Logo" style="width: 50px; height: 50px; border-radius: 8px; object-fit: cover;">
-  <span>ICM App</span>
-</div>
+      <img src="logo.jpg" alt="Logo" style="width: 50px; height: 50px; border-radius: 8px; object-fit: cover;">
+      <span>ICM App</span>
+    </div>
     <div class="nav-right">
       <span id="cloud-status" class="cloud-badge">☁️ Conectando...</span>
       <button id="btn-volver-inicio" class="btn btn-secondary" style="display:none; padding:6px 10px; font-size:13px;" onclick="mostrarInicio()">🏠 Inicio</button>
@@ -197,7 +196,6 @@
 
   <div class="container">
 
-    <!-- 0. INICIO -->
     <section id="pantalla-inicio" class="view-section active">
       <div style="text-align: center; margin: 10px 0 20px 0; padding: 0 10px;">
         <h1 style="font-size: 21px; color: var(--primary);">Sistema de Limpieza</h1>
@@ -206,32 +204,37 @@
 
       <div class="home-grid">
         <div class="mode-card" onclick="abrirModo('editor')" style="display: flex; align-items: center; gap: 16px;">
-  <div class="mode-icon" style="flex-shrink: 0;"><img src="editico.jpg" alt="Editor" style="width: 60px; height: 60px; border-radius: 10px; object-fit: cover; display: block;"></div>
-  <div>
-    <div class="mode-title">EDITOR</div>
-    <div class="mode-desc">Crear, modificar y eliminar instructivos por sector.</div>
-  </div>
-</div>
+          <div class="mode-icon" style="flex-shrink: 0;"><img src="editico.jpg" alt="Editor" style="width: 60px; height: 60px; border-radius: 10px; object-fit: cover; display: block;"></div>
+          <div>
+            <div class="mode-title">EDITOR</div>
+            <div class="mode-desc">Crear, modificar y eliminar instructivos por sector.</div>
+          </div>
+        </div>
 
-<div class="mode-card" onclick="abrirModo('checklist')" style="display: flex; align-items: center; gap: 16px;">
-  <div class="mode-icon" style="flex-shrink: 0;"><img src="checkico.jpg" alt="Checklist" style="width: 60px; height: 60px; border-radius: 10px; object-fit: cover; display: block;"></div>
-  <div>
-    <div class="mode-title">CHECKLIST</div>
-    <div class="mode-desc">Ejecutar chequeos y cargar evidencias.</div>
-  </div>
-</div>
+        <div class="mode-card" onclick="abrirModo('checklist')" style="display: flex; align-items: center; gap: 16px;">
+          <div class="mode-icon" style="flex-shrink: 0;"><img src="checkico.jpg" alt="Checklist" style="width: 60px; height: 60px; border-radius: 10px; object-fit: cover; display: block;"></div>
+          <div>
+            <div class="mode-title">CHECKLIST</div>
+            <div class="mode-desc">Ejecutar chequeos y cargar evidencias.</div>
+          </div>
+        </div>
 
-<div class="mode-card" onclick="abrirModo('bitacora')" style="display: flex; align-items: center; gap: 16px;">
-  <div class="mode-icon" style="flex-shrink: 0;"><img src="archico.jpg" alt="Bitácora" style="width: 60px; height: 60px; border-radius: 10px; object-fit: cover; display: block;"></div>
-  <div>
-    <div class="mode-title">BITÁCORA</div>
-    <div class="mode-desc">Historial completo con fotos, notas y exportación PDF.</div>
-  </div>
-</div>
+        <div class="mode-card" onclick="abrirModo('bitacora')" style="display: flex; align-items: center; gap: 16px;">
+          <div class="mode-icon" style="flex-shrink: 0;"><img src="archico.jpg" alt="Bitácora" style="width: 60px; height: 60px; border-radius: 10px; object-fit: cover; display: block;"></div>
+          <div>
+            <div class="mode-title">BITÁCORA</div>
+            <div class="mode-desc">Historial completo con fotos, notas y exportación PDF.</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 10px; text-align: center;">
+          <button class="btn btn-secondary" style="width: 100%; padding: 12px; border: 1px solid var(--border-color);" onclick="generarBackupPC()">
+            💾 Descargar Backup de la Nube a la PC
+          </button>
+        </div>
       </div>
     </section>
 
-    <!-- 1. EDITOR -->
     <section id="modo-editor" class="view-section">
       <div class="card">
         <div class="section-header">
@@ -284,7 +287,6 @@
       </div>
     </section>
 
-    <!-- 2. CHECKLIST -->
     <section id="modo-checklist" class="view-section">
       <div class="card">
         <div class="section-header">
@@ -367,7 +369,6 @@
       </div>
     </section>
 
-    <!-- 3. BITÁCORA -->
     <section id="modo-bitacora" class="view-section">
       <div class="card">
         <div class="section-header">
@@ -470,6 +471,47 @@
       img.src = evt.target.result;
     };
     reader.readAsDataURL(file);
+  }
+
+  /* FUNCIÓN PARA GENERAR EL BACKUP EN LA PC */
+  async function generarBackupPC() {
+    try {
+      const btnStatus = document.getElementById('cloud-status');
+      if (btnStatus) btnStatus.innerText = '⏳ Descargando Backup...';
+
+      // Consulta directa a la base de datos para asegurar el backup más reciente
+      const { data: rawInstructivos, error: errInst } = await supabaseClient.from('instructivos').select('*');
+      const { data: rawBitacora, error: errBit } = await supabaseClient.from('bitacora').select('*');
+
+      if (errInst || errBit) {
+        throw new Error('No se pudieron obtener todos los datos de Supabase.');
+      }
+
+      const backupData = {
+        fecha_backup: new Date().toISOString(),
+        instructivos: rawInstructivos || [],
+        bitacora: rawBitacora || []
+      };
+
+      const jsonStr = JSON.stringify(backupData, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      const fecha = new Date().toISOString().slice(0, 10);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `backup_limpieza_industrial_${fecha}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      if (btnStatus) btnStatus.innerText = '☁️ En la Nube';
+      alert('¡Backup descargado exitosamente en tu PC!');
+    } catch (e) {
+      console.error(e);
+      alert('Hubo un error al generar el backup: ' + e.message);
+    }
   }
 
   /* EDITOR */
@@ -613,27 +655,26 @@
       id: id,
       sector: sector,
       titulo: titulo,
-      compania: document.getElementById('ed_compania').value,
-      planta: document.getElementById('ed_planta').value,
-      proceso: document.getElementById('ed_proceso').value,
-      objetivo: document.getElementById('ed_objetivo').value,
-      seguridad_gen: document.getElementById('ed_seguridad_gen').value,
-      herramientas: document.getElementById('ed_herramientas').value,
-      recursos: document.getElementById('ed_recursos').value,
-      epp: document.getElementById('ed_epp').value,
+      compania: document.getElementById('ed_compania').value.trim(),
+      planta: document.getElementById('ed_planta').value.trim(),
+      proceso: document.getElementById('ed_proceso').value.trim(),
+      objetivo: document.getElementById('ed_objetivo').value.trim(),
+      seguridad_gen: document.getElementById('ed_seguridad_gen').value.trim(),
+      herramientas: document.getElementById('ed_herramientas').value.trim(),
+      recursos: document.getElementById('ed_recursos').value.trim(),
+      epp: document.getElementById('ed_epp').value.trim(),
       pasos: editorPasos
     };
 
     const { error } = await supabaseClient.from('instructivos').upsert({ id: id, data: objData });
     if (error) {
-      alert("Error al guardar en la nube: " + error.message);
-      return;
+      alert("Error al guardar: " + error.message);
+    } else {
+      libreria[id] = objData;
+      currentEditingId = id;
+      cargarSelectEditor();
+      alert("Instructivo guardado en la nube con éxito.");
     }
-
-    libreria[id] = objData;
-    currentEditingId = id;
-    cargarSelectEditor();
-    alert("Instructivo guardado en la nube con éxito.");
   }
 
   /* CHECKLIST */
@@ -658,356 +699,250 @@
     }
     activeChecklist = libreria[key];
     currentFotosEvidencia = {};
-    area.style.display = 'block';
 
-    document.getElementById('out_chk_titulo').innerText = '📋 ' + activeChecklist.titulo;
+    document.getElementById('out_chk_titulo').innerText = activeChecklist.titulo;
     document.getElementById('out_chk_sector').innerText = activeChecklist.sector || '-';
-    document.getElementById('out_chk_compania').innerText = activeChecklist.compania;
-    document.getElementById('out_chk_planta').innerText = activeChecklist.planta;
-    document.getElementById('out_chk_proceso').innerText = activeChecklist.proceso;
-    document.getElementById('out_chk_objetivo').innerText = activeChecklist.objetivo;
-    document.getElementById('out_chk_seguridad_gen').innerText = activeChecklist.seguridad_gen;
-    document.getElementById('out_chk_herramientas').innerText = activeChecklist.herramientas;
-    document.getElementById('out_chk_recursos').innerText = activeChecklist.recursos;
-    document.getElementById('out_chk_epp').innerText = activeChecklist.epp;
+    document.getElementById('out_chk_compania').innerText = activeChecklist.compania || '-';
+    document.getElementById('out_chk_planta').innerText = activeChecklist.planta || '-';
+    document.getElementById('out_chk_proceso').innerText = activeChecklist.proceso || '-';
+    document.getElementById('out_chk_objetivo').innerText = activeChecklist.objetivo || '-';
 
-    renderPasosChecklistVerticales();
+    document.getElementById('out_chk_seguridad_gen').innerText = activeChecklist.seguridad_gen || '-';
+    document.getElementById('out_chk_herramientas').innerText = activeChecklist.herramientas || '-';
+    document.getElementById('out_chk_recursos').innerText = activeChecklist.recursos || '-';
+    document.getElementById('out_chk_epp').innerText = activeChecklist.epp || '-';
+
+    renderPasosChecklist();
+    calcularPromedio();
+    area.style.display = 'block';
   }
 
-  function renderPasosChecklistVerticales() {
+  function renderPasosChecklist() {
     const container = document.getElementById('out_chk_lista_pasos');
     container.innerHTML = '';
-    activeChecklist.pasos.forEach((p, idx) => {
-      const fotoActual = currentFotosEvidencia[idx] || "";
+    const pasos = activeChecklist.pasos || [];
+
+    pasos.forEach((p, idx) => {
       const card = document.createElement('div');
       card.className = 'step-card-checklist';
       card.innerHTML = `
         <div class="step-card-header">
-          <div>
-            <span style="font-size:12px; color:var(--text-muted); text-transform:uppercase; font-weight:700;">PASO #${idx+1}</span><br>
-            <span class="step-interviniente">${p.interviniente ? p.interviniente + ': ' : ''}${p.titulo}</span>
-          </div>
-          <div>
-            <select id="chk_step_avance_${idx}" class="select-avance" onchange="calcularPromedioChecklist()">
-              <option value="0">0%</option><option value="10">10%</option><option value="20">20%</option><option value="30">30%</option><option value="40">40%</option><option value="50">50%</option><option value="60">60%</option><option value="70">70%</option><option value="80">80%</option><option value="90">90%</option><option value="100">100%</option>
-            </select>
-          </div>
+          <span class="step-interviniente">#${idx + 1} - ${p.interviniente || 'Operador'}</span>
+          <select class="select-avance" onchange="calcularPromedio()">
+            <option value="0">0%</option>
+            <option value="25">25%</option>
+            <option value="50">50%</option>
+            <option value="75">75%</option>
+            <option value="100">100%</option>
+          </select>
         </div>
 
-        <div class="ref-container-highlight">
-          <span class="ref-title-badge">🖼️ Imagen de Referencia / Guía</span>
-          ${p.imagen ? `<img src="${p.imagen}" class="img-ref-large">` : '<span style="color:#94a3b8; font-size:13px;">Sin imagen de referencia</span>'}
-        </div>
+        <h3 style="font-size:15px; margin-bottom:8px; color:var(--primary);">${p.titulo || ''}</h3>
+
+        ${p.imagen ? `
+          <div class="ref-container-highlight">
+            <span class="ref-title-badge">📌 Imagen de Referencia</span>
+            <img src="${p.imagen}" class="img-ref-large">
+          </div>
+        ` : ''}
 
         <div class="como-evidencia-box">
-          <span class="ref-title-badge" style="color:var(--accent);">📌 Cómo y Cuándo</span>
-          <div class="como-text">${p.como}</div>
-
-          <span class="ref-title-badge" style="color:var(--accent); margin-top:8px;">📷 Evidencia de Ejecución</span>
-          <label class="evidencia-upload-btn">
-            <span>📷 Capturar / Cargar Evidencia</span>
-            <input type="file" accept="image/*" style="display:none;" onchange="cargarFotoPaso(event, ${idx})">
-          </label>
-          ${fotoActual ? `<img src="${fotoActual}" class="img-ref-large" style="max-height:220px; border-color:var(--accent);">` : ''}
-
-          <textarea id="chk_step_obs_${idx}" class="form-control" style="margin-top:8px;" placeholder="Observaciones / Novedades de este paso..."></textarea>
+          <div class="como-text">${p.como || ''}</div>
+          <button class="evidencia-upload-btn" onclick="document.getElementById('evid_file_${idx}').click()">📷 Subir Evidencia</button>
+          <input type="file" id="evid_file_${idx}" accept="image/*" style="display:none" onchange="cargarEvidencia(event, ${idx})">
+          <div id="evid_preview_${idx}"></div>
         </div>
 
-        <div class="warning-box">
-          <strong>⚠️ Atención / Seguridad:</strong> ${p.seguridad || 'Sin precauciones adicionales.'}
-        </div>
+        ${p.seguridad ? `<div class="warning-box">⚠️ <strong>Seguridad:</strong> ${p.seguridad}</div>` : ''}
       `;
       container.appendChild(card);
     });
-    calcularPromedioChecklist();
   }
 
-  function cargarFotoPaso(e, idx) {
+  function cargarEvidencia(e, idx) {
     const file = e.target.files[0];
     if (file) {
       comprimirImagen(file, function(base64) {
         currentFotosEvidencia[idx] = base64;
-        renderPasosChecklistVerticales();
+        const prev = document.getElementById(`evid_preview_${idx}`);
+        prev.innerHTML = `<img src="${base64}" style="width:100%; max-height:160px; object-fit:contain; border-radius:6px; margin-top:6px;">`;
       });
     }
   }
 
-  function calcularPromedioChecklist() {
-    if (!activeChecklist || !activeChecklist.pasos.length) return 0;
+  function calcularPromedio() {
+    const selects = document.querySelectorAll('.select-avance');
+    if (selects.length === 0) return;
     let suma = 0;
-    activeChecklist.pasos.forEach((_, idx) => {
-      const sel = document.getElementById(`chk_step_avance_${idx}`);
-      suma += parseInt(sel ? sel.value : "0", 10);
-    });
-    const prom = Math.round(suma / activeChecklist.pasos.length);
-    document.getElementById('out_chk_promedio').innerText = `${prom}%`;
-    return prom;
-  }
-
-  function capturarEstadoCheckInicial() {
-    return {
-      ot: document.getElementById('chk_in_ot').checked,
-      credenciales: document.getElementById('chk_in_credenciales').checked,
-      epp: document.getElementById('chk_in_epp').checked,
-      r_atmosferico: document.querySelector('input[name="chk_r_atmosferico"]:checked')?.value || 'N/A',
-      r_megaspirador: document.querySelector('input[name="chk_r_megaspirador"]:checked')?.value || 'N/A',
-      r_hidrolavadora: document.querySelector('input[name="chk_r_hidrolavadora"]:checked')?.value || 'N/A',
-      r_hidrojet: document.querySelector('input[name="chk_r_hidrojet"]:checked')?.value || 'N/A',
-      r_barrero: document.querySelector('input[name="chk_r_barrero"]:checked')?.value || 'N/A',
-      r_criogenica: document.querySelector('input[name="chk_r_criogenica"]:checked')?.value || 'N/A',
-      h_percutor: document.querySelector('input[name="chk_h_percutor"]:checked')?.value || 'N/A',
-      h_pala: document.querySelector('input[name="chk_h_pala"]:checked')?.value || 'N/A',
-      h_cuchara: document.querySelector('input[name="chk_h_cuchara"]:checked')?.value || 'N/A',
-      h_tacho: document.querySelector('input[name="chk_h_tacho"]:checked')?.value || 'N/A',
-      h_escoba: document.querySelector('input[name="chk_h_escoba"]:checked')?.value || 'N/A',
-      h_cepillo: document.querySelector('input[name="chk_h_cepillo"]:checked')?.value || 'N/A',
-      h_espatula: document.querySelector('input[name="chk_h_espatula"]:checked')?.value || 'N/A',
-      h_gancho: document.querySelector('input[name="chk_h_gancho"]:checked')?.value || 'N/A',
-      h_rastrillo: document.querySelector('input[name="chk_h_rastrillo"]:checked')?.value || 'N/A',
-      h_trapo: document.querySelector('input[name="chk_h_trapo"]:checked')?.value || 'N/A',
-      h_desengrasante: document.querySelector('input[name="chk_h_desengrasante"]:checked')?.value || 'N/A',
-      h_solvente: document.querySelector('input[name="chk_h_solvente"]:checked')?.value || 'N/A',
-      h_iluminacion: document.querySelector('input[name="chk_h_iluminacion"]:checked')?.value || 'N/A'
-    };
+    selects.forEach(s => suma += parseInt(s.value));
+    const prom = Math.round(suma / selects.length);
+    document.getElementById('out_chk_promedio').innerText = prom + '%';
   }
 
   async function enviarChecklistABitacora() {
     if (!activeChecklist) return;
-    const avances = {}, observaciones = {};
-    activeChecklist.pasos.forEach((_, idx) => {
-      const sel = document.getElementById(`chk_step_avance_${idx}`);
-      const txt = document.getElementById(`chk_step_obs_${idx}`);
-      avances[idx] = sel ? sel.value : "0";
-      observaciones[idx] = txt ? txt.value.trim() : "";
-    });
 
-    const regId = 'reg_' + Date.now();
-    const registro = {
-      id: regId,
-      fecha: new Date().toLocaleString(),
-      sector: activeChecklist.sector || '-',
-      titulo: activeChecklist.titulo,
-      compania: activeChecklist.compania || 'Tenaris',
-      planta: activeChecklist.planta || 'TuboCaribe',
-      proceso: activeChecklist.proceso || '-',
-      objetivo: activeChecklist.objetivo || '-',
-      seguridad_gen: activeChecklist.seguridad_gen || '-',
-      herramientas: activeChecklist.herramientas || '-',
-      recursos: activeChecklist.recursos || '-',
-      epp: activeChecklist.epp || '-',
-      promedio: calcularPromedioChecklist() + '%',
-      checkInicial: capturarEstadoCheckInicial(),
-      pasos: JSON.parse(JSON.stringify(activeChecklist.pasos)),
-      detalleState: { avances, observaciones, fotos: currentFotosEvidencia }
+    const selects = document.querySelectorAll('.select-avance');
+    const avances = Array.from(selects).map(s => parseInt(s.value));
+    const promedio = document.getElementById('out_chk_promedio').innerText;
+
+    // Obtener valores de la sección Check Inicial
+    const checkInicialData = {
+      ot: document.getElementById('chk_in_ot').checked,
+      credenciales: document.getElementById('chk_in_credenciales').checked,
+      epp: document.getElementById('chk_in_epp').checked,
+      recursos: {
+        atmosferico: document.querySelector('input[name="chk_r_atmosferico"]:checked')?.value,
+        megaspirador: document.querySelector('input[name="chk_r_megaspirador"]:checked')?.value,
+        hidrolavadora: document.querySelector('input[name="chk_r_hidrolavadora"]:checked')?.value,
+        hidrojet: document.querySelector('input[name="chk_r_hidrojet"]:checked')?.value,
+        barrero: document.querySelector('input[name="chk_r_barrero"]:checked')?.value,
+        criogenica: document.querySelector('input[name="chk_r_criogenica"]:checked')?.value
+      },
+      herramientas: {
+        percutor: document.querySelector('input[name="chk_h_percutor"]:checked')?.value,
+        pala: document.querySelector('input[name="chk_h_pala"]:checked')?.value,
+        cuchara: document.querySelector('input[name="chk_h_cuchara"]:checked')?.value,
+        tacho: document.querySelector('input[name="chk_h_tacho"]:checked')?.value,
+        escoba: document.querySelector('input[name="chk_h_escoba"]:checked')?.value,
+        cepillo: document.querySelector('input[name="chk_h_cepillo"]:checked')?.value,
+        espatula: document.querySelector('input[name="chk_h_espatula"]:checked')?.value,
+        gancho: document.querySelector('input[name="chk_h_gancho"]:checked')?.value,
+        rastrillo: document.querySelector('input[name="chk_h_rastrillo"]:checked')?.value,
+        trapo: document.querySelector('input[name="chk_h_trapo"]:checked')?.value,
+        desengrasante: document.querySelector('input[name="chk_h_desengrasante"]:checked')?.value,
+        solvente: document.querySelector('input[name="chk_h_solvente"]:checked')?.value,
+        iluminacion: document.querySelector('input[name="chk_h_iluminacion"]:checked')?.value
+      }
     };
 
-    const { error } = await supabaseClient.from('bitacora').upsert({ id: regId, data: registro });
-    if (error) {
-      alert("Error al guardar bitácora en la nube: " + error.message);
-      return;
-    }
+    const registro = {
+      id: Date.now(),
+      fecha: new Date().toLocaleString(),
+      titulo: activeChecklist.titulo,
+      sector: activeChecklist.sector,
+      compania: activeChecklist.compania,
+      planta: activeChecklist.planta,
+      proceso: activeChecklist.proceso,
+      objetivo: activeChecklist.objetivo,
+      seguridad_gen: activeChecklist.seguridad_gen,
+      herramientas: activeChecklist.herramientas,
+      recursos: activeChecklist.recursos,
+      epp: activeChecklist.epp,
+      promedio: promedio,
+      checkInicial: checkInicialData,
+      pasosEjecutados: activeChecklist.pasos.map((p, i) => ({
+        ...p,
+        avance: avances[i] || 0,
+        evidencia: currentFotosEvidencia[i] || null
+      }))
+    };
 
-    bitacora.unshift(registro);
-    alert("Registro guardado con éxito en la Bitácora de la Nube.");
-    abrirModo('bitacora');
+    const { error } = await supabaseClient.from('bitacora').insert({ data: registro });
+    if (error) {
+      alert("Error al enviar a la bitácora: " + error.message);
+    } else {
+      bitacora.unshift(registro);
+      alert("¡Chequeo enviado a la Bitácora correctamente!");
+      abrirModo('bitacora');
+    }
   }
 
   /* BITÁCORA */
   function renderBitacora() {
-    const container = document.getElementById('out_bitacora_lista');
-    container.innerHTML = '';
+    const listEl = document.getElementById('out_bitacora_lista');
+    listEl.innerHTML = '';
     if (bitacora.length === 0) {
-      container.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:14px; padding:20px;">No hay registros en la nube.</p>';
+      listEl.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:12px;">No hay registros cargados.</p>';
       return;
     }
-    bitacora.forEach((reg, idx) => {
-      const item = document.createElement('div');
-      item.style.cssText = "background:#ffffff; border:1px solid var(--border-color); border-radius:8px; padding:10px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;";
-      item.innerHTML = `
-        <div>
-          <div style="font-size:12px; color:var(--text-muted);">${reg.fecha}</div>
-          <div style="font-weight:700; font-size:15px; color:var(--primary);">${reg.titulo}</div>
-          <div style="font-size:13px; color:var(--text-muted);">${reg.sector} | ${reg.planta}</div>
+    bitacora.forEach((b, idx) => {
+      const card = document.createElement('div');
+      card.style.cssText = 'background:#ffffff; border:1px solid var(--border-color); border-radius:8px; padding:12px; margin-bottom:10px; cursor:pointer;';
+      card.onclick = () => verDetalleBitacora(idx);
+      card.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <strong style="font-size:15px; color:var(--primary);">${b.titulo}</strong>
+          <span class="promedio-badge" style="font-size:13px; padding:2px 8px;">${b.promedio}</span>
         </div>
-        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
-          <span class="promedio-badge" style="font-size:13px; padding:2px 8px;">${reg.promedio}</span>
-          <div>
-            <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="verDetalleBitacora(${idx})">👁️ Ver Doc Completo</button>
-            <button class="btn btn-danger" style="padding:4px 8px; font-size:12px;" onclick="eliminarBitacora('${reg.id}', ${idx})">🗑️</button>
-          </div>
+        <div style="font-size:12px; color:var(--text-muted);">
+          <span>📍 ${b.sector || 'S/S'}</span> | <span>📅 ${b.fecha}</span>
         </div>
       `;
-      container.appendChild(item);
+      listEl.appendChild(card);
     });
   }
 
   function verDetalleBitacora(idx) {
-    const reg = bitacora[idx];
-    const card = document.getElementById('bitacora_detalle_card');
-    const cont = document.getElementById('bit_det_contenido');
-    const chkIn = reg.checkInicial || {};
+    const item = bitacora[idx];
+    const container = document.getElementById('bit_det_contenido');
+    const wrapper = document.getElementById('bitacora_detalle_card');
 
-    let pasosHtml = '';
-    if (reg.pasos && Array.isArray(reg.pasos)) {
-      reg.pasos.forEach((p, i) => {
-        const avance = reg.detalleState?.avances?.[i] || '0';
-        const obs = reg.detalleState?.observaciones?.[i] || 'Sin observaciones registradas.';
-        const fotoEvidencia = reg.detalleState?.fotos?.[i];
-
-        pasosHtml += `
-          <div class="doc-step-box">
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #cbd5e1; padding-bottom: 6px; margin-bottom: 8px;">
-              <strong style="color:#0f172a; font-size:14px;">PASO #${i+1}: ${p.interviniente ? p.interviniente + ' - ' : ''}${p.titulo}</strong>
-              <span style="background:#2563eb; color:#ffffff; padding:3px 10px; border-radius:12px; font-weight:700; font-size:12px;">AVANCE: ${avance}%</span>
-            </div>
-            <p style="font-size:13px; margin-bottom:6px; line-height:1.4;"><strong>📌 Procedimiento:</strong> ${p.como}</p>
-            ${p.seguridad ? `<p style="font-size:13px; margin-bottom:6px; color:#b45309; line-height:1.4;"><strong>⚠️ Seguridad / Precaución:</strong> ${p.seguridad}</p>` : ''}
-            <p style="font-size:13px; margin-bottom:8px; color:#334155; background:#f8fafc; padding:6px; border-radius:4px; border:1px solid #e2e8f0;"><strong>💬 Observación / Novedad:</strong> ${obs}</p>
-
-            <div class="doc-img-grid">
-              ${p.imagen ? `<div class="doc-img-card"><span style="font-size:11px; font-weight:700; color:#64748b; display:block; margin-bottom:4px;">🖼️ GUÍA</span><img src="${p.imagen}"></div>` : ''}
-              ${fotoEvidencia ? `<div class="doc-img-card" style="border-color:#2563eb; background:#eff6ff;"><span style="font-size:11px; font-weight:700; color:#2563eb; display:block; margin-bottom:4px;">📷 EVIDENCIA</span><img src="${fotoEvidencia}"></div>` : ''}
-            </div>
-          </div>
-        `;
-      });
-    }
-
-    cont.innerHTML = `
-      <div id="documento_imprimible" style="padding: 12px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; color: #1e293b;">
-        <div style="text-align:center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 14px;">
-          <h2 style="font-size: 17px; color: #0f172a; margin-bottom: 4px; font-weight:700;">INFORME</h2>
-          <div style="font-size: 12px; color: #64748b; display:flex; justify-content:space-between; margin-top:6px;">
-            <span><strong>Compañía/Planta:</strong> ${reg.compania} / ${reg.planta}</span>
-            <span><strong>Fecha:</strong> ${reg.fecha}</span>
-          </div>
-        </div>
-        <table class="info-table" style="margin-bottom:12px;">
-          <tr><th style="width:25%;">SECTOR</th><td style="font-weight:700;">${reg.sector}</td></tr>
-          <tr><th>TAREA</th><td style="font-weight:700;">${reg.titulo}</td></tr>
-          <tr><th>OBJETIVO</th><td>${reg.objetivo || '-'}</td></tr>
-          <tr><th>ESTADO GLOBAL</th><td><strong style="color:#16a34a; font-size:14px;">${reg.promedio} Cumplido</strong></td></tr>
+    let html = `
+      <div style="border:1px solid #cbd5e1; padding:12px; border-radius:8px; margin-bottom:12px; background:#ffffff;">
+        <h2 style="font-size:16px; color:var(--primary); font-weight:700; margin-bottom:8px;">${item.titulo}</h2>
+        <table class="info-table">
+          <tr><th>SECTOR</th><td>${item.sector || '-'}</td></tr>
+          <tr><th>FECHA</th><td>${item.fecha}</td></tr>
+          <tr><th>AVANCE GENERAL</th><td><strong>${item.promedio}</strong></td></tr>
+          <tr><th>COMPAÑÍA / PLANTA</th><td>${item.compania || '-'} / ${item.planta || '-'}</td></tr>
+          <tr><th>PROCESO</th><td>${item.proceso || '-'}</td></tr>
+          <tr><th>OBJETIVO</th><td>${item.objetivo || '-'}</td></tr>
         </table>
-        
-        <div style="font-size:13px; font-weight:700; color:#0f172a; margin: 14px 0 6px 0; text-transform:uppercase;">Verificación Inicial</div>
-        <table class="info-table" style="margin-bottom:14px; font-size:12px;">
-          <tr><th>Seguridad (OT / Credenciales / EPP)</th><td>OT: ${chkIn.ot ? '✅' : '❌'} | Credenciales: ${chkIn.credenciales ? '✅' : '❌'} | EPP: ${chkIn.epp ? '✅' : '❌'}</td></tr>
-          <tr><th>Seguridad General del Instructivo</th><td>${reg.seguridad_gen || '-'}</td></tr>
-          <tr><th>Herramientas requeridas</th><td>${reg.herramientas || '-'}</td></tr>
-          <tr><th>Recursos requeridos</th><td>${reg.recursos || '-'}</td></tr>
-        </table>
-
-        <div style="font-size:13px; font-weight:700; color:#0f172a; margin: 14px 0 6px 0; text-transform:uppercase;">Pasos Operativos y Evidencias</div>
-        ${pasosHtml}
-      </div>
-      <div style="display:flex; gap:10px; margin-top:16px;">
-        <button class="btn btn-primary" style="flex:1;" onclick="descargarPDF('${reg.titulo.replace(/[^a-zA-Z0-9]/g, '_')}')">📄 Descargar PDF / Imprimir</button>
-        <button class="btn btn-secondary" style="flex:1;" onclick="cerrarDetalleBitacora()">Cerrar</button>
       </div>
     `;
-    card.style.display = 'block';
-    card.scrollIntoView({ behavior: 'smooth' });
-  }
 
-  function descargarPDF(nombre) {
-    const contenido = document.getElementById('documento_imprimible').innerHTML;
-    
-    const ventanaPDF = window.open('', '_blank');
-    ventanaPDF.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>${nombre}</title>
-        <style>
-          body { 
-            font-family: 'Inter', system-ui, sans-serif; 
-            color: #1e293b; 
-            padding: 15px; 
-            background: #ffffff; 
-            margin: 0;
-          }
-          .info-table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            font-size: 13px; 
-            margin-bottom: 12px; 
-            border: 1px solid #cbd5e1; 
-          }
-          .info-table td, .info-table th { 
-            padding: 8px 10px; 
-            border: 1px solid #cbd5e1; 
-            text-align: left; 
-          }
-          .info-table th { 
-            background: #f1f5f9; 
-            color: #0f172a; 
-            text-transform: uppercase; 
-            font-size: 11px; 
-          }
-          .doc-step-box { 
-            border: 1px solid #cbd5e1; 
-            border-radius: 8px; 
-            padding: 10px; 
-            margin-bottom: 14px; 
-            background: #ffffff; 
-            page-break-inside: avoid; 
-            break-inside: avoid; 
-          }
-          .doc-img-grid { 
-            display: flex; 
-            gap: 10px; 
-            margin-top: 10px; 
-          }
-          .doc-img-card { 
-            flex: 1; 
-            border: 1px solid #cbd5e1; 
-            border-radius: 6px; 
-            padding: 6px; 
-            text-align: center; 
-            background: #f8fafc; 
-          }
-          .doc-img-card img { 
-            max-width: 100%; 
-            max-height: 200px; 
-            object-fit: contain; 
-            border-radius: 4px; 
-          }
-          
-          @media print {
-            body { padding: 0; background: transparent; }
-            .doc-step-box { break-inside: avoid; page-break-inside: avoid; }
-            table { page-break-inside: auto; }
-            tr { page-break-inside: avoid; page-break-after: auto; }
-          }
-        </style>
-      </head>
-      <body>
-        ${contenido}
-        <script>
-          window.onload = function() {
-            setTimeout(() => {
-              window.focus();
-              window.print();
-            }, 600);
-          };
-        <\/script>
-      </body>
-      </html>
-    `);
-    ventanaPDF.document.close();
+    // Sección Check Inicial
+    if (item.checkInicial) {
+      const ci = item.checkInicial;
+      html += `
+        <div style="border:1px solid #cbd5e1; padding:12px; border-radius:8px; margin-bottom:12px; background:#ffffff;">
+          <div style="font-size:14px; font-weight:700; color:var(--primary); margin-bottom:8px;">Check Inicial Realizado</div>
+          <div style="margin-bottom:8px;">
+            <strong>Seguridad:</strong> 
+            OT: ${ci.ot ? '✅' : '❌'} | 
+            Credenciales: ${ci.credenciales ? '✅' : '❌'} | 
+            EPP: ${ci.epp ? '✅' : '❌'}
+          </div>
+        </div>
+      `;
+    }
+
+    // Pasos
+    (item.pasosEjecutados || []).forEach((p, i) => {
+      html += `
+        <div class="doc-step-box">
+          <div style="display:flex; justify-content:space-between; font-weight:700; border-bottom:1px solid #e2e8f0; padding-bottom:4px; margin-bottom:6px;">
+            <span>Paso #${i + 1}: ${p.interviniente || 'Operador'}</span>
+            <span style="color:var(--accent);">Avance: ${p.avance}%</span>
+          </div>
+          <div style="font-weight:700; font-size:14px; margin-bottom:4px;">${p.titulo || ''}</div>
+          <div style="white-space:pre-line; margin-bottom:8px; color:#334155;">${p.como || ''}</div>
+
+          <div class="doc-img-grid">
+            ${p.imagen ? `
+              <div class="doc-img-card">
+                <span style="font-size:10px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:2px;">REFERENCIA</span>
+                <img src="${p.imagen}">
+              </div>
+            ` : ''}
+            ${p.evidencia ? `
+              <div class="doc-img-card">
+                <span style="font-size:10px; font-weight:700; color:var(--accent); display:block; margin-bottom:2px;">EVIDENCIA</span>
+                <img src="${p.evidencia}">
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+    wrapper.style.display = 'block';
   }
 
   function cerrarDetalleBitacora() {
     document.getElementById('bitacora_detalle_card').style.display = 'none';
-  }
-
-  async function eliminarBitacora(idReg, idx) {
-    if (confirm("¿Eliminar este registro de la nube?")) {
-      await supabaseClient.from('bitacora').delete().eq('id', idReg);
-      bitacora.splice(idx, 1);
-      renderBitacora();
-      cerrarDetalleBitacora();
-    }
   }
 </script>
 </body>
